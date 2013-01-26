@@ -1,0 +1,16 @@
+
+/*
+ * By default, we treat both axis ranges as [0..10].
+ */
+x-axis range 0..5 unlabeled
+y-axis range 0..5 unlabeled
+
+/*
+ * Define two lines.
+ */
+A = line with slightly negative slope
+B = horizontal line
+
+// A intersects B at (2, 2)
+
+
