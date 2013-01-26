@@ -11,6 +11,13 @@ y-axis range 0..5 unlabeled
 A = line with slightly negative slope
 B = horizontal line
 
-// A intersects B at (2, 2)
+/*
+ * Say that these lines intersect at a particular point.
+ */
+A and B intersect at (2, 2)
 
+/*
+ * You can also add more intersection points, as well as more shape names:
+ */
+// A and B and C intersect at (2, 2) and (5, 3)
 
