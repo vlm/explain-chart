@@ -55,17 +55,16 @@ A line is either an informal line described by its slope, or somewhat
 more formal line, described not only by its slope, but also by one
 or more of it special points — coordinates that we know lie on the line.
 
-> data Line = InformalLine String LineKind [SpecialPoint]
+> data Line = InformalLine LineKind
 >           | ExactLine {
->                       name :: String,
 >                       coeff_a :: Int,
->                       coeff_b :: Int,
->                       special_points :: [SpecialPoint]
+>                       coeff_b :: Int
 >                       }
 >           deriving Show
 
-If we're given more than one SpecialPoint, we might be able to upgrade a line
-from InformalLine to ExactLine. Otherwise, we keep line as informal as possible.
+If we knew where the line intersects with another shape, we might be able to
+upgrade a line from InformalLine to ExactLine.
+Otherwise, we keep line as informal as possible.
 
 Parse the line specification.
     "A = line with positive slope"
@@ -74,15 +73,13 @@ Parse the line specification.
     "D = horizontal line"
 
 > parseLine = do
->     name <- identifier
->     reservedOp "="
 >     lineKind <- choice [
 >       do { reserved "line"; reserved "with";
 >            kind <- parseLineKind; reserved "slope"; return kind },
 >       reserved "vertical"   >> reserved "line" >> return Vertical,
 >       reserved "horizontal" >> reserved "line" >> return Horizontal
 >       ]
->     return (InformalLine name lineKind [])
+>     return (InformalLine lineKind)
 
 > parseLineKind = choice [
 >     reserved "positive" >> return Positive,

@@ -22,7 +22,7 @@ where intersections occur.
 
 > data Intersection = Intersection {
 >       shape_names :: [String],
->       intersections :: [(Int, Int)]
+>       coordinates :: [(Int, Int)]
 >       } deriving Show
 
 > parseIntersection = do
