@@ -17,6 +17,6 @@
 >                 Left err  -> print err
 >                 Right xs  -> print xs
 >         (_, _, errs) -> do
->             hPutStrLn stderr (concat errs ++ "Usage: expl <filename>")
+>             hPutStrLn stderr (concat errs ++ "Usage: explain-chart <filename>")
 >             exitWith (ExitFailure 1)
 
