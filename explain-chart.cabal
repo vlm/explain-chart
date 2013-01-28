@@ -17,8 +17,9 @@ synopsis:            A DSL to make textual explanations of charts (graphs)
 
 -- A longer description of the package.
 description:         
-    Parse a formal description of the graph and produce both the graph itself
-    and a plain english description of what this graph is.
+    Parse a semi-formal description of the graph and produce both
+    the graph itself and a plain english description of how this
+    graph looks like.
 
 -- The license under which the package is released.
 license:             BSD3
