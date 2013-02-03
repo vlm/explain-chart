@@ -6,17 +6,17 @@
 > import ChartModel.Primitives
 > import ChartModel.Parser
 
-> data Flag = Flag
-
 > main = do
->     args <- getArgs
->     case getOpt RequireOrder [] args of
->         (_, [filename], []) -> do
->             result <- parseFromFile parseChart filename
->             case result of
->                 Left err  -> print err
->                 Right xs  -> print xs
->         (_, _, errs) -> do
->             hPutStrLn stderr (concat errs ++ "Usage: explain-chart <filename>")
->             exitWith (ExitFailure 1)
-
+>   args <- getArgs
+>   chart <- case getOpt RequireOrder [] args of
+>                   (_, [filename], []) -> do
+>                       result <- parseFromFile parseChart filename
+>                       case result of
+>                           Left err  -> do
+>                               hPutStrLn stderr (show err)
+>                               exitWith (ExitFailure 1)
+>                           Right xs  -> return xs
+>                   (_, _, errs) -> do
+>                       hPutStrLn stderr (concat errs ++ "Usage: explain-chart <filename>")
+>                       exitWith (ExitFailure 1)
+>   print chart
