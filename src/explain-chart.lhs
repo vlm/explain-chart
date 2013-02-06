@@ -3,6 +3,10 @@
 > import System.Exit (exitWith, ExitCode(..))
 > import System.IO (hPutStrLn, stderr)
 
+> import Data.Data
+> import Data.Maybe
+> import Data.Generics
+
 > import ChartModel.Primitives
 > import ChartModel.Parser
 
@@ -30,19 +34,7 @@ of their intersections.
 
 >   let chart' = pushDownIntersections chart
 
-
 >   print (xmin, xmax)
 
 > getAxis kind chart =
->   let xs = concatMap (
->             \t -> case t of
->               MkAxis axis ->
->                   if axis_kind axis == kind
->                   then
->                       [(range_min axis, range_max axis)]
->                   else
->                       []
->               _ -> []) chart in
->   case xs of
->       (x : _) -> x
->       _ -> (0, 100)
+>  head $ reverse $ everything (++) ([(0, 100)] `mkQ` (\axis -> if axis_kind axis == kind then [(range_min axis, range_max axis)] else [])) chart

@@ -39,6 +39,7 @@ In our DSL, a line can be introduced via description like
 
 > module ChartModel.Line where
 
+> import Data.Data
 > import ChartModel.SpecialPoint
 > import ChartModel.Parser
 > import ChartModel.Shape
@@ -50,7 +51,7 @@ the usual assortment of lines used in the economic tutorials.
 > data LineKind = SteepPositive | Positive | SlightPositive
 >               | SlightNegative | Negative | SteepNegative
 >               | Horizontal
->               deriving Show
+>               deriving (Show, Data, Typeable)
 
 A line is either an informal line described by its slope, or somewhat
 more formal line, described not only by its slope, but also by one
@@ -61,7 +62,7 @@ or more of it special points — coordinates that we know lie on the line.
 >                       coeff_a :: Double,
 >                       coeff_b :: Double
 >                       }
->           deriving Show
+>           deriving (Show, Data, Typeable)
 
 
 An exact line is certainly an instance of polynome. Reflect it here.

@@ -11,6 +11,7 @@ Define primitive constituents of the typical chart: axes, shapes, labels.
 > ) where
 
 > import Data.List
+> import Data.Data
 
 > import ChartModel.Shape
 > import ChartModel.Axis
@@ -26,7 +27,7 @@ Primitive is a collection of all the labels, axes, shapes, etc.
 > data Primitive = MkAxis Axis
 >                | MkShape Shape
 >                | MkIntersection Intersection
->                deriving Show
+>                deriving (Show, Data, Typeable)
 > parsePrimitive =   fmap MkAxis parseAxis
 >                <|> try (fmap MkShape (parseAnyShape [parseLine]))
 >                <|> try (fmap MkIntersection parseIntersection)

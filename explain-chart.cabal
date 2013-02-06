@@ -54,9 +54,12 @@ executable explain-chart
   -- .hs or .lhs file containing the Main module.
   main-is:             explain-chart.lhs
 
+  extensions:           DeriveDataTypeable
+
   -- NOTE!!! For hmatrix to install, you might need to install libgsl from
   -- http://mirrors.kernel.org/gnu/gsl/; a safe pick is gsl-1.15.
   build-depends:       base ==4.5.*, parsec ==3.*,
                        polynomial ==0.6.*,
-                       hmatrix ==0.14.*
+                       hmatrix ==0.14.*,
+                       syb ==0.3.*
 

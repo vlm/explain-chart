@@ -15,6 +15,7 @@ To constrain the shapes we should be able to parse
 
 > module ChartModel.Intersection (Intersection(..), parseIntersection) where
 
+> import Data.Data
 > import ChartModel.Parser
 
 We define which shapes intersect, and a number of coordinate pairs
@@ -23,7 +24,7 @@ where intersections occur.
 > data Intersection = Intersection {
 >       shape_names :: [String],
 >       coordinates :: [(Int, Int)]
->       } deriving Show
+>       } deriving (Show, Data, Typeable)
 
 > parseIntersection = do
 >     shapes <- andSep2 identifier

@@ -6,6 +6,7 @@
 >                          parseAnyShape
 >                          ) where
 
+> import Data.Data
 > import Data.List
 
 > import ChartModel.Parser
@@ -23,14 +24,22 @@ Shape is a collection of regular drawing primitives: lines, curves, etc.
 >    center_y _ (left_y, right_y) = (fromIntegral right_y - 0) / 2
 >    coefficients :: a -> [Coefficient Double] -- Little-Endian, e.g. b+ax+cx^2
 
-> data Shape = forall a. (Show a, PolyShape a) => Shape {
+> data Shape = forall a. (Show a, PolyShape a, Data a, Typeable a) => Shape {
 >               name :: String,
 >               shape :: a,
 >               shape_intersections :: [SpecialPoint]
->              }
-> instance Show (Shape) where
+>              } deriving (Typeable)
+> instance Show Shape where
 >   show (Shape n s i) =
 >       "Shape { " ++ intercalate "," [show n, show s, show i] ++ " }"
+> instance Data Shape where
+>   gfoldl k z (Shape n s i) = z Shape `k` n `k` s `k` i
+>   gunfold k z c = undefined -- case constrIndex c of 1 -> k (k (k (z Shape)))
+>   toConstr (Shape _ _ _) = con_Shape
+>   dataTypeOf _ = ty_T
+> con_Shape = mkConstr ty_T "Shape" [] Prefix
+> ty_T   = mkDataType "ChartModel.Shape" [con_Shape]
+
 
 There are many kinds of shapes. We don't know how to parse neither of them.
 So we pick a list of all possible PolyShape-compatible parsers and try them
