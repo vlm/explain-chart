@@ -58,8 +58,8 @@ or more of it special points — coordinates that we know lie on the line.
 
 > data Line = InformalLine LineKind
 >           | ExactLine {
->                       coeff_a :: Int,
->                       coeff_b :: Int
+>                       coeff_a :: Double,
+>                       coeff_b :: Double
 >                       }
 >           deriving Show
 
@@ -67,7 +67,10 @@ or more of it special points — coordinates that we know lie on the line.
 An exact line is certainly an instance of polynome. Reflect it here.
 
 > instance PolyShape Line where
->   polynome (ExactLine a b) = poly BE [fromIntegral a, fromIntegral b]
+>   coefficients (ExactLine a b) = [CoeffExact b,
+>                                   CoeffExact a]
+>   coefficients (InformalLine k) = [CoeffAny,
+>                                    CoeffRange (a_coeff_range_by k)]
 
 If we knew where the line intersects with another shape, we might be able to
 upgrade a line from InformalLine to ExactLine.
@@ -105,7 +108,7 @@ on the line, this function returns a list of possible candidates for the line.
 
 > lineCandidates :: (Int, Int) -> (Int, Int) -> LineKind -> [(Int, Int)] -> Either String [(Double, Double)]
 > lineCandidates (x_left, x_right) (y_bottom, y_top) kind points =
->    let (nominal_a_min, nominal_a_max) = a_coefficient_by kind in
+>    let (nominal_a_min, nominal_a_max) = a_coeff_range_by kind in
 
 Since the "a" coefficient corresponds to the perceived slope only in case
 the coordinate system is square (i.e., x-range matches y-range), we need to
@@ -119,8 +122,8 @@ adjust it by looking at axes range ratios.
 Each slope kind (except vertical) can be thought of as to correspond to a
 certain range of the "a" values (from the formula a x + b).
 
-> a_coefficient_by :: LineKind -> (Double, Double)
-> a_coefficient_by kind =
+> a_coeff_range_by :: LineKind -> (Double, Double)
+> a_coeff_range_by kind =
 >  let (min_angle, max_angle) = case kind of
 >       SlightPositive -> (10, 35)
 >       Positive       -> (35, 55) 
