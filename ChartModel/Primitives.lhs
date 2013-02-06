@@ -13,6 +13,7 @@ Define primitive constituents of the typical chart: axes, shapes, labels.
 > import ChartModel.Shape
 > import ChartModel.Axis
 > import ChartModel.Line
+> import ChartModel.Constraints
 > import ChartModel.Intersection
 > import ChartModel.SpecialPoint
 > import ChartModel.Parser
