@@ -41,6 +41,7 @@ In our DSL, a line can be introduced via description like
 
 > import ChartModel.SpecialPoint
 > import ChartModel.Parser
+> import ChartModel.Shape
 
 We first say that we have 6 kinds of slopes, plus two horizontal (y = const)
 and vertical line kinds. This is about right to informally describe
@@ -48,7 +49,7 @@ the usual assortment of lines used in the economic tutorials.
 
 > data LineKind = SteepPositive | Positive | SlightPositive
 >               | SlightNegative | Negative | SteepNegative
->               | Vertical | Horizontal
+>               | Horizontal
 >               deriving Show
 
 A line is either an informal line described by its slope, or somewhat
@@ -61,6 +62,12 @@ or more of it special points — coordinates that we know lie on the line.
 >                       coeff_b :: Int
 >                       }
 >           deriving Show
+
+
+An exact line is certainly an instance of polynome. Reflect it here.
+
+> instance PolyShape Line where
+>   polynome (ExactLine a b) = poly BE [fromIntegral a, fromIntegral b]
 
 If we knew where the line intersects with another shape, we might be able to
 upgrade a line from InformalLine to ExactLine.
@@ -76,7 +83,6 @@ Parse the line specification.
 >     lineKind <- choice [
 >       do { reserved "line"; reserved "with";
 >            kind <- parseLineKind; reserved "slope"; return kind },
->       reserved "vertical"   >> reserved "line" >> return Vertical,
 >       reserved "horizontal" >> reserved "line" >> return Horizontal
 >       ]
 >     return (InformalLine lineKind)
@@ -90,7 +96,6 @@ Parse the line specification.
 >     reserved "steeply" >> choice [
 >              reserved "positive" >> return SteepPositive,
 >              reserved "negative" >> return SteepNegative ],
->     reserved "vertical" >> return Vertical,
 >     reserved "horizontal">> return Horizontal
 >    ]
 
@@ -111,7 +116,7 @@ adjust it by looking at axes range ratios.
 >   let a_max = nominal_a_max / axes_ratio in
 >   Right [(a_min, a_max)]
 
-Each slope kind (except Vertical) can be thought of as to correspond to a
+Each slope kind (except vertical) can be thought of as to correspond to a
 certain range of the "a" values (from the formula a x + b).
 
 > a_coefficient_by :: LineKind -> (Double, Double)
@@ -124,7 +129,6 @@ certain range of the "a" values (from the formula a x + b).
 >       Negative       -> (-35, -55) 
 >       SlightNegative -> (-10, -35)
 >       Horizontal     -> (0.0, 0.0)
->       Vertical       -> error "Vertical line should should not be handled here"
 >  in (a_of_angle min_angle, a_of_angle max_angle)
 >  where
 >       a_of_angle angle = tan (angle * pi / 180)

@@ -10,6 +10,7 @@ Define primitive constituents of the typical chart: axes, shapes, labels.
 
 > import Data.List
 
+> import ChartModel.Shape
 > import ChartModel.Axis
 > import ChartModel.Line
 > import ChartModel.Intersection
@@ -17,28 +18,14 @@ Define primitive constituents of the typical chart: axes, shapes, labels.
 > import ChartModel.Parser
 
 
-Shape is a collection of drawing primitives: lines, curves, etc.
-
-> data Shape a = Shape {
->               name :: String,
->               shape :: a,
->               shape_intersections :: [SpecialPoint]
->              } deriving Show
-> parseShape = do
->   name <- identifier
->   reservedOp "="
->   line <- parseLine
->   return (Shape name line [])
-
-
 Primitive is a collection of all the labels, axes, shapes, etc.
 
 > data Primitive = MkAxis Axis
->                | MkShape (Shape Line)
+>                | MkShape Shape
 >                | MkIntersection Intersection
 >                deriving Show
 > parsePrimitive =   fmap MkAxis parseAxis
->                <|> try (fmap MkShape parseShape)
+>                <|> try (fmap MkShape (parseAnyShape [parseLine]))
 >                <|> try (fmap MkIntersection parseIntersection)
 
 > isIntersection p = case p of { MkIntersection _ -> True; _ -> False }
