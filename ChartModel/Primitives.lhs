@@ -1,7 +1,9 @@
 
 Define primitive constituents of the typical chart: axes, shapes, labels.
 
-> module ChartModel.Primitives (parseChart, pushDownIntersections, Shape(..),
+> module ChartModel.Primitives (Primitive(..),
+>                               Shape(..),
+>                               parseChart, pushDownIntersections,
 >                               module ChartModel.Axis,
 >                               module ChartModel.Line,
 >                               module ChartModel.SpecialPoint,

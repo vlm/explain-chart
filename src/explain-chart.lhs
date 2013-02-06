@@ -19,4 +19,30 @@
 >                   (_, _, errs) -> do
 >                       hPutStrLn stderr (concat errs ++ "Usage: explain-chart <filename>")
 >                       exitWith (ExitFailure 1)
->   print chart
+
+Figure out the chart dimensions.
+
+>   let (xmin, xmax) = getAxis X chart
+>   let (ymin, ymax) = getAxis Y chart
+
+Convert intersections as DSL entities into the corresponding shapes' lists
+of their intersections.
+
+>   let chart' = pushDownIntersections chart
+
+
+>   print (xmin, xmax)
+
+> getAxis kind chart =
+>   let xs = concatMap (
+>             \t -> case t of
+>               MkAxis axis ->
+>                   if axis_kind axis == kind
+>                   then
+>                       [(range_min axis, range_max axis)]
+>                   else
+>                       []
+>               _ -> []) chart in
+>   case xs of
+>       (x : _) -> x
+>       _ -> (0, 100)

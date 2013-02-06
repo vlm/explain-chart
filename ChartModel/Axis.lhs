@@ -15,14 +15,14 @@ as representing the following axis layout:
       <----------+----------> x
       -10        0        10
 
-> module ChartModel.Axis (Axis(..), parseAxis) where
+> module ChartModel.Axis (Axis(..), AxisKind(..), parseAxis) where
 
 > import ChartModel.Parser
 
 Axis can be y-axis or x-axis. Both can have ranges, and either of them
 can be labeled or unlabeled (if the range is not important).
 
-> data AxisKind = X | Y deriving Show
+> data AxisKind = X | Y deriving (Show, Eq)
 > data Axis = Axis {
 >       axis_kind :: AxisKind,
 >       range_min :: Int,
