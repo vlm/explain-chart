@@ -1,9 +1,11 @@
+> {-# LANGUAGE NoMonomorphismRestriction #-}
 
 Define primitive constituents of the typical chart: axes, shapes, labels.
 
 > module ChartModel.Primitives (Primitive(..),
 >                               Shape(..),
 >                               parseChart, pushDownIntersections,
+>                               collect, collectMap,
 >                               module ChartModel.Axis,
 >                               module ChartModel.Line,
 >                               module ChartModel.SpecialPoint,
@@ -12,6 +14,7 @@ Define primitive constituents of the typical chart: axes, shapes, labels.
 
 > import Data.List
 > import Data.Data
+> import Data.Generics
 
 > import ChartModel.Shape
 > import ChartModel.Axis
@@ -52,14 +55,24 @@ separately to each shape. This algorithm is quadratic, but who cares.
 
 > pushDownIntersections ps =
 >   filter (not . isIntersection)
->   $ map (\p -> case p of
->       MkShape (Shape name shape []) ->
+>   $ everywhere (mkT $
+>       \(Shape name shape []) ->
 >           let ints = filter (elem name . shape_names) intersections in
 >           let s_ints = concatMap (map mkSpecialPoint . coordinates) ints in
->           MkShape (Shape name shape s_ints)
->       x -> x
+>           Shape name shape s_ints
 >     ) ps
->   where intersections = map (\(MkIntersection x) -> x) $ filter isIntersection ps
+>   where intersections = collect ps :: [Intersection]
 >         mkSpecialPoint (x, y) = SpecialPoint x y False ""
 
+
+Collect a lists of any objects using SYB (Scrap Your Boilerplate).
+Usage: collect a :: [Type]
+Example
+    collect chart :: [Line]
+
+> collect = collectMap id
+> collectMap f = everything (++) (\a -> case cast a of
+>                                   Just a -> [f a]
+>                                   Nothing -> []
+>                           )
 

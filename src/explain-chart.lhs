@@ -33,8 +33,7 @@ Convert intersections as DSL entities into the corresponding shapes' lists
 of their intersections.
 
 >   let chart' = pushDownIntersections chart
-
->   print (xmin, xmax)
+>   print $ (collect chart' :: [Shape])
 
 > getAxis kind chart =
->  head $ reverse $ everything (++) ([(0, 100)] `mkQ` (\axis -> if axis_kind axis == kind then [(range_min axis, range_max axis)] else [])) chart
+>   head $ reverse $ everything (++) ([(0, 100)] `mkQ` (\axis -> if axis_kind axis == kind then [(range_min axis, range_max axis)] else [])) chart
