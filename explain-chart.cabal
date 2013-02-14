@@ -56,10 +56,26 @@ executable explain-chart
 
   extensions:           DeriveDataTypeable
 
-  -- NOTE!!! For hmatrix to install, you might need to install libgsl from
-  -- http://mirrors.kernel.org/gnu/gsl/; a safe pick is gsl-1.15.
+  --
+  -- NOTES
+  --
+  -- 1. For hmatrix to install, you might need to install libgsl from
+  --    http://mirrors.kernel.org/gnu/gsl/
+  --    (a safe pick is gsl-1.15).
+  -- 2. For Chart to install, use the following recipe:
+  --    Run this: http://www.haskell.org/haskellwiki/Gtk2Hs/Mac
+  --    Then this:
+  --    cabal update
+  --    cabal install gtk2hs-buildtools
+  --    cabal install gtk
+  --    cabal install chart
+  --
+
   build-depends:       base ==4.5.*, parsec ==3.*,
                        polynomial ==0.6.*,
                        hmatrix ==0.14.*,
-                       syb ==0.3.*
+                       syb ==0.3.*,
+                       Chart ==0.16.*,
+                       colour ==2.3.*,
+                       data-accessor ==0.2.2.*
 

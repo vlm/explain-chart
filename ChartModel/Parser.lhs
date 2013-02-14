@@ -7,8 +7,10 @@ See also:
 
     http://book.realworldhaskell.org/read/using-parsec.html
 
-> module ChartModel.Parser (run, whiteSpace, identifier, natural, parens,
+> module ChartModel.Parser (run, whiteSpace, identifier,
+>                           natural, naturalOrFloat, parens,
 >                           reserved, reservedOp, comma, commaSep1,
+>                           stringLiteral,
 >                           module Text.Parsec.Prim,
 >                           module Text.Parsec.Char,
 >                           module Text.Parsec.String,
@@ -40,7 +42,7 @@ Our language is based on C comments syntax.
 >       , P.caseSensitive  = False
 >       }
 
-> echart_keywords = ["line", "with", "slightly", "steeply",
+> echart_keywords = ["save", "line", "with", "slightly", "steeply",
 >                    "negative", "positive",
 >                    "slope", "vertical", "horizontal",
 >                    "x-axis", "y-axis", "range",
@@ -54,6 +56,7 @@ Our language is based on C comments syntax.
 > lexeme     = P.lexeme lexer
 > symbol     = P.symbol lexer
 > natural    = P.natural lexer
+> naturalOrFloat    = P.naturalOrFloat lexer
 > comma      = P.comma lexer
 > commaSep1  = P.commaSep1 lexer
 > parens     = P.parens lexer
@@ -62,6 +65,7 @@ Our language is based on C comments syntax.
 > identifier = P.identifier lexer
 > reserved   = P.reserved lexer
 > reservedOp = P.reservedOp lexer
+> stringLiteral = P.stringLiteral lexer
  
 > run :: Show a => Parser a -> String -> IO ()
 > run p input =

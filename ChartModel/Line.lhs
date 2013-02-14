@@ -1,4 +1,4 @@
-
+> {-# LANGUAGE DeriveDataTypeable #-}
 
 One of the simplest primitives is a simple straight unbounded line,
 corresponding to a formula y = a x + b, where a represents slope
@@ -43,6 +43,7 @@ In our DSL, a line can be introduced via description like
 > import ChartModel.SpecialPoint
 > import ChartModel.Parser
 > import ChartModel.Shape
+> import ChartModel.Geometry
 
 We first say that we have 6 kinds of slopes, plus two horizontal (y = const)
 and vertical line kinds. This is about right to informally describe
@@ -68,10 +69,10 @@ or more of it special points — coordinates that we know lie on the line.
 An exact line is certainly an instance of polynome. Reflect it here.
 
 > instance PolyShape Line where
->   coefficients (ExactLine a b) = [CoeffExact b,
+>   coefficients (ExactLine a b) _ _ = [CoeffExact b,
 >                                   CoeffExact a]
->   coefficients (InformalLine k) = [CoeffAny,
->                                    CoeffRange (a_coeff_range_by k)]
+>   coefficients (InformalLine k) xrange yrange = [CoeffAny,
+>        CoeffRange (adjust_aspect_ratio xrange yrange $ a_coeff_range_by k)]
 
 If we knew where the line intersects with another shape, we might be able to
 upgrade a line from InformalLine to ExactLine.
@@ -104,21 +105,17 @@ Parse the line specification.
 >    ]
 
 
-Given the line kind (or slope), the axes ranges, and the list of points
-on the line, this function returns a list of possible candidates for the line.
-
-> lineCandidates :: (Int, Int) -> (Int, Int) -> LineKind -> [(Int, Int)] -> Either String [(Double, Double)]
-> lineCandidates (x_left, x_right) (y_bottom, y_top) kind points =
->    let (nominal_a_min, nominal_a_max) = a_coeff_range_by kind in
-
 Since the "a" coefficient corresponds to the perceived slope only in case
 the coordinate system is square (i.e., x-range matches y-range), we need to
 adjust it by looking at axes range ratios.
 
->   let axes_ratio = fromIntegral y_top / fromIntegral x_right in
->   let a_min = nominal_a_min / axes_ratio in
->   let a_max = nominal_a_max / axes_ratio in
->   Right [(a_min, a_max)]
+> adjust_aspect_ratio xrange yrange (a_min, a_max) =
+>   let (xl, xr) = top_right_quadrant xrange
+>       (yl, yr) = top_right_quadrant yrange
+>       axes_ratio = (xr-xl) / (yr-yl)
+>       a_min' = a_min / axes_ratio
+>       a_max' = a_max / axes_ratio
+>   in (a_min', a_max')
 
 Each slope kind (except vertical) can be thought of as to correspond to a
 certain range of the "a" values (from the formula a x + b).

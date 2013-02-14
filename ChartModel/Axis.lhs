@@ -26,8 +26,8 @@ can be labeled or unlabeled (if the range is not important).
 > data AxisKind = X | Y deriving (Show, Eq, Data, Typeable)
 > data Axis = Axis {
 >       axis_kind :: AxisKind,
->       range_min :: Int,
->       range_max :: Int,
+>       range_min :: Double,
+>       range_max :: Double,
 >       labeled   :: Bool
 >       } deriving (Show, Data, Typeable)
 
@@ -37,10 +37,21 @@ can be labeled or unlabeled (if the range is not important).
 > parseAxis = do
 >     axisKind <- parseAxisKind
 >     reserved "range"
->     left <- fmap fromIntegral natural
->     reservedOp ".."
->     right <- fmap fromIntegral natural
+>     (left, right) <- parseRange
 >     isLabeled <-   (reserved "labeled" >> return True)
 >                <|> (reserved "unlabeled" >> return False)
 >     return (Axis axisKind left right isLabeled)
+
+Parse range is ambiguous. 0..1 may confuse the floating point parser due to
+the dots which look like a beginning of the floating point.
+
+> parseRange = do
+>   left <- choice [try $ fmap toDouble naturalOrFloat,
+>                   try $ fmap fromIntegral natural]
+>   reservedOp ".."
+>   right <- fmap toDouble naturalOrFloat
+>   return (left, right)
+>   where
+>     toDouble (Left i) = fromIntegral i
+>     toDouble (Right d) = d
 

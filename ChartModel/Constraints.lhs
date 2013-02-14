@@ -1,4 +1,4 @@
-> module ChartModel.Constraints (constraints) where
+> module ChartModel.Constraints (costFunction) where
 
 > import Math.Polynomial
 > import ChartModel.Shape
@@ -6,21 +6,26 @@
 Given a polynome of degree D and a list of coordinate pairs which lie
 on that polynome, we produce a cost function for minimizing the coefficients.
 
- let (l,f) = constraints (10,10) [CoeffAny, CoeffRange (2,4)] [(5,15)]
+ let (l,f) = costFunction (10,10) [CoeffAny, CoeffRange (2,4)] [(5,15)]
  let cs = fst $ minimize NMSimplex2 1E-5 1000 (replicate l 10) f (replicate l 1)
  let p = evalPoly (poly LE cs)
  let range = [0..20.0] in mplot $ [fromList $ range, fromList $ map p range]
 
 or
 
-let f r c i = let (l,f) = constraints r c i in let cs = fst $ minimize NMSimplex2 1E-5 10000 (replicate l 10) f (replicate l 1) in let p = evalPoly (poly LE cs) in let range = [0..20.0] in do { mplot $ [fromList $ range, fromList $ map p range]; print cs; print (fst r, p $ snd r); print (map (p . fst) i) }
-
+let f r c i = let (l,f) = costFunction r c i in
+let cs = fst $ minimize NMSimplex2 1E-5 10000 (replicate l 10) f (replicate l 1) in
+let p = evalPoly (poly LE cs) in let range = [0..20.0] in do { mplot $ [fromList $ range, fromList $ map p range]; print cs; print (fst r, p $ snd r); print (map (p . fst) i) }
 
 
 f (10,10) [CoeffExact 10, CoeffRange (0.5,1.5)] []
 
-> constraints :: (Double, Double) -> [Coefficient Double] -> [(Double, Double)] -> (Int, [Double] -> Double)
-> constraints (center_x, center_y) coeffs coords =
+Compute cost given such constraints as a desired center of the shape
+(which may differ between lines and parabolas), the list of intersections,
+and the initial values or ranges for the coefficients.
+
+> costFunction :: (Double, Double) -> [Coefficient Double] -> [(Double, Double)] -> (Int, [Double] -> Double)
+> costFunction (center_x, center_y) coeffs coords =
 >   let individual_coeff_constraints = map coeffConstraint coeffs
 >       -- Compute the cost of changing the coefficients
 >       cost1 cs = sum (zipWith id individual_coeff_constraints cs)
@@ -29,7 +34,7 @@ f (10,10) [CoeffExact 10, CoeffRange (0.5,1.5)] []
 >       -- ax+b=y, cs=[b,a], x and y are known. Minimize (y-(ax+b))^n.
 >       intersection_constraint cs (x, y) = (y - evalPoly (poly LE cs) x) ** 10
 >       -- If no other constraints are in place, the graphs are centered.
->       cost3 cs = (sigmcost $ center_y - evalPoly (poly LE cs) center_x)
+>       cost3 cs = (sigmcost $ center_y - evalPoly (poly LE cs) center_x) / 1E20
 >   in (length coeffs, \cs -> cost1 cs + cost2 cs + cost3 cs)
 >   where
 

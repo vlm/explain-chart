@@ -2,12 +2,13 @@
 
 Define primitive constituents of the typical chart: axes, shapes, labels.
 
-> module ChartModel.Primitives (Primitive(..),
->                               Shape(..),
+> module ChartModel.Primitives (Filename, Primitive(..),
 >                               parseChart, pushDownIntersections,
 >                               collect, collectMap,
 >                               module ChartModel.Axis,
 >                               module ChartModel.Line,
+>                               module ChartModel.Constraints,
+>                               module ChartModel.Shape,
 >                               module ChartModel.SpecialPoint,
 >                               module ChartModel.Intersection
 > ) where
@@ -27,13 +28,19 @@ Define primitive constituents of the typical chart: axes, shapes, labels.
 
 Primitive is a collection of all the labels, axes, shapes, etc.
 
+> newtype Filename = Filename String deriving (Data, Typeable)
+> instance Show Filename where
+>     show (Filename name) = name
+
 > data Primitive = MkAxis Axis
 >                | MkShape Shape
+>                | MkSave Filename
 >                | MkIntersection Intersection
 >                deriving (Show, Data, Typeable)
 > parsePrimitive =   fmap MkAxis parseAxis
->                <|> try (fmap MkShape (parseAnyShape [parseLine]))
->                <|> try (fmap MkIntersection parseIntersection)
+>   <|> try (fmap MkShape (parseAnyShape [parseLine]))
+>   <|> try (fmap MkSave (fmap Filename $ reserved "save" >> stringLiteral))
+>   <|> try (fmap MkIntersection parseIntersection)
 
 > isIntersection p = case p of { MkIntersection _ -> True; _ -> False }
 

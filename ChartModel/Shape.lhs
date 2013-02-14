@@ -1,4 +1,4 @@
-> {-# LANGUAGE ExistentialQuantification, RankNTypes #-}
+> {-# LANGUAGE ExistentialQuantification, RankNTypes, DeriveDataTypeable #-}
 
 > module ChartModel.Shape (Shape(..),
 >                          PolyShape(..),
@@ -11,18 +11,19 @@
 
 > import ChartModel.Parser
 > import ChartModel.SpecialPoint
+> import ChartModel.Geometry
 
 > data Coefficient a = CoeffExact a | CoeffRange (a, a) | CoeffAny
->                      deriving Eq
+>                      deriving (Eq, Show)
 
 Shape is a collection of regular drawing primitives: lines, curves, etc.
 
 > class PolyShape a where
->    center_x :: a -> (Int, Int) -> Double
->    center_x _ (left_x, right_x) = (fromIntegral right_x - 0) / 2
->    center_y :: a -> (Int, Int) -> Double
->    center_y _ (left_y, right_y) = (fromIntegral right_y - 0) / 2
->    coefficients :: a -> [Coefficient Double] -- Little-Endian, e.g. b+ax+cx^2
+>    center_x :: a -> (Double, Double) -> Double
+>    center_x _ = center_in_top_right_quadrant
+>    center_y :: a -> (Double, Double) -> Double
+>    center_y _ = center_in_top_right_quadrant
+>    coefficients :: a -> (Double, Double) -> (Double, Double) -> [Coefficient Double] -- Little-Endian, e.g. b+ax+cx^2
 
 > data Shape = forall a. (Show a, PolyShape a, Data a, Typeable a) => Shape {
 >               name :: String,

@@ -23,7 +23,7 @@ where intersections occur.
 
 > data Intersection = Intersection {
 >       shape_names :: [String],
->       coordinates :: [(Int, Int)]
+>       coordinates :: [(Double, Double)]
 >       } deriving (Show, Data, Typeable)
 
 > parseIntersection = do
@@ -46,3 +46,4 @@ Define a helper function that can capture 2 or more "and"-separated things.
 >   reserved "and"
 >   rest <- p `sepBy1` (reserved "and")
 >   return (first : rest)
+
