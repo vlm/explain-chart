@@ -2,27 +2,28 @@
 /*
  * Save the graphical representation of this chart under the given name.
  */
-save "10x10.pdf"
+save "foo.pdf"
 
 /*
  * By default, we treat both axis ranges as [0..10].
  */
-x-axis range 0..10 labeled
-y-axis range 0..10 labeled
+x-axis range 0..20 labeled
+y-axis range 0..30 labeled
 
 /*
- * Define two lines.
+ * Define multiple lines.
  */
-Pos = line with positive slope
+Pos = line with steeply positive slope
 SlightPos = line with slightly positive slope
 SteepPos = line with steeply positive slope
-Neg = line with slightly negative slope
-//B = horizontal line
+Neg = line with steeply negative slope
 
 /*
  * Say that these lines intersect at a particular point.
  */
-//A and B intersect at (60, 100)
+Pos and SteepPos intersect at (5, 10)
+Pos and SlightPos intersect at (10, 15)
+SteepPos and Neg intersect at (10, 20)
 
 /*
  * You can also add more intersection points, as well as more shape names:

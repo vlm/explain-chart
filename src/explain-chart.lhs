@@ -4,6 +4,7 @@
 > import System.IO (hPutStrLn, stderr)
 
 > import Data.Data
+> import Data.List
 > import Data.Maybe
 > import Data.Generics
 
@@ -16,6 +17,11 @@ check what that DSL describes. We employ Chart library to draw the graphs.
 > import Data.Accessor
 > import Data.Colour
 > import Data.Colour.SRGB.Linear
+
+A different way to plot, useful for 3D debugging.
+
+> import Graphics.Plot
+> import Data.Packed.Matrix
 
 We use numeric minimization to compute the optimal shape of the graph,
 given various constraints. Constraints may include a list of proposed
@@ -59,23 +65,33 @@ Convert intersections as DSL entities into the corresponding shapes' lists
 of their intersections.
 
 >   let chart' = pushDownIntersections chart
->   print $ (collect chart' :: [Shape])
+>   let shapes = collect chart' :: [Shape]
 
 >   let plot_of_shape shape =
->        let (name, _, f) = reify_shape shape (xmin,xmax) (ymin,ymax) in
+>        let ((name, f), _) = reify_shape (xmin,xmax) (ymin,ymax) shape in
 >        plot_lines_values ^= [[ (x, f x) | x <- xcoords, f x < ymax, f x > ymin]]
 >        $ plot_lines_limit_values ^= ylimits
 >        $ plot_lines_title ^= name
 >        $ defaultPlotLines
-
->   let plots = zipWith (\c -> plot_lines_style .> line_color ^= opaque c)
->                 (cycle colors)
->                 (map plot_of_shape $ (collect chart' :: [Shape]))
 > 
+>   mapM_ (\s ->
+>       let ((name, f), (_, cfs)) = reify_shape (xmin,xmax) (ymin,ymax) s
+>       in plot_cost_functions name ((-10, 10), (-10, 10)) cfs
+>       ) shapes
+> 
+>   let plots = zipWith (\c -> plot_lines_style .> line_color ^= opaque c)
+>                       (cycle colors)
+>                       (map plot_of_shape shapes)
+> 
+>   let hidden_range = PlotHidden {
+>         plot_hidden_x_values_ = [xmin, xmax],
+>         plot_hidden_y_values_ = [ymin, ymax]
+>       }
 >   let layout =
 >          layout1_bottom_axis .> laxis_override ^= axisTicksAtLabels . (if xlabeled then id else axisLabelsHide . axisTicksHide)
 >          $ layout1_left_axis .> laxis_override ^= axisTicksAtLabels . (if ylabeled then id else axisLabelsHide . axisTicksHide)
->          $ layout1_plots ^= [Left (toPlot p) | p <- plots]
+>          $ layout1_plots ^= [Left (toPlot p) | p <- plots] ++
+>                             [Left (toPlot hidden_range)]
 >          $ defaultLayout1
 >   mapM_ (renderableToPDFFile (toRenderable layout) 500 500 . show)
 >         (collect chart :: [Filename])
@@ -84,16 +100,46 @@ Concretize vague shape coefficients by optimizing for intersections,
 shape center, and other constraints. Returns a name and the evaluation
 function (\x -> f x).
 
-> reify_shape (Shape name shape intersections) xrange yrange =
+> reify_shape xrange yrange (Shape name shape intersections) =
 >   let
 >       coeff_guesses = coefficients shape xrange yrange
 >       cx = center_x shape xrange
 >       cy = center_y shape yrange
->       (degree, cost_f) = costFunction (cx, cy) coeff_guesses (map sp_xy intersections)
+>       (degree, cost_functions) = costFunction (cx, cy) coeff_guesses (map sp_xy intersections)
+>       cost_f cs = sum $ map (flip snd cs) cost_functions
 >       (final_coeffs, _) = trace ("Coefficient guesses for " ++ name ++ ": " ++ show coeff_guesses) $
->                           minimize NMSimplex2 1E-5 1000 (replicate degree 10) cost_f (replicate degree 1)
+>                           minimize NMSimplex2 1E-5 1000 (replicate degree 20) cost_f (replicate degree 1)
 >   in trace ("Final coefficients " ++ show final_coeffs)
->            (name, final_coeffs, evalPoly (poly LE final_coeffs))
+>            ((name, evalPoly (poly LE final_coeffs)), (final_coeffs, cost_functions))
+
+> plot_cost_functions name ((xl, xr), (yl, yr)) cfs =
+>   let
+>       points :: ([Double] -> Double) -> [((Double, Double), Double)]
+>       points f =
+>           [((a, b), f [a, b])
+>               | a <- [xl, xl+(xr-xl)/400 .. xr],
+>                 b <- [yl, yl+(yr-yl)/400 .. yr],
+>                 f [a, b] < 1]
+>       cmpSnd a b = compare (snd a) (snd b)
+>       normalize pts =
+>           let min = snd $ minimumBy cmpSnd pts
+>               max = snd $ maximumBy cmpSnd pts
+>               rescale v = (v - min) / (max - min)
+>           in map (\(ab, v) -> (ab, rescale v)) pts
+>       make_dot shift ((a, b), v) =
+>               plot_points_values ^= [(a + shift * 0.01, b)]
+>               $ plot_points_style ^= (filledCircles 1 $ withOpacity (rgb 1 (shift) 0) v)
+>               $ defaultPlotPoints
+>       field shift (name, cost_f) = map (make_dot shift) (normalize $ points cost_f)
+>       cost_function =
+>           let ((_, f1) : (_, f2) : (_, f3) : []) = cfs
+>           in [(undefined, \cs -> f2 cs )]
+>       layout  =
+>         layout1_plots ^= [Left (toPlot p) | p <- concat $ zipWith field [0..] cost_function]
+>         $ layout1_title ^= name ++ (show $ length cfs)
+>         $ defaultLayout1
+>   in renderableToPDFFile (toRenderable layout) 500 500 "debug.pdf"
+>   where sigmoid t = t / (1 + exp(-t))
 
 > axisTicksAtLabels ad@(AxisData { axis_labels_ = al }) = ad {
 >   axis_ticks_ = concatMap (\(x, _label) -> [(x, 5),(x, -5)]) $ head al

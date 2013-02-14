@@ -24,7 +24,7 @@ Compute cost given such constraints as a desired center of the shape
 (which may differ between lines and parabolas), the list of intersections,
 and the initial values or ranges for the coefficients.
 
-> costFunction :: (Double, Double) -> [Coefficient Double] -> [(Double, Double)] -> (Int, [Double] -> Double)
+> costFunction :: (Double, Double) -> [Coefficient Double] -> [(Double, Double)] -> (Int, [(String, [Double] -> Double)])
 > costFunction (center_x, center_y) coeffs coords =
 >   let individual_coeff_constraints = map coeffConstraint coeffs
 >       -- Compute the cost of changing the coefficients
@@ -32,10 +32,10 @@ and the initial values or ranges for the coefficients.
 >       -- Compute the cost of intersection with coords
 >       cost2 cs = sum (map (intersection_constraint cs) coords)
 >       -- ax+b=y, cs=[b,a], x and y are known. Minimize (y-(ax+b))^n.
->       intersection_constraint cs (x, y) = (y - evalPoly (poly LE cs) x) ** 10
+>       intersection_constraint cs (x, y) = abs (y - evalPoly (poly LE cs) x)
 >       -- If no other constraints are in place, the graphs are centered.
 >       cost3 cs = (sigmcost $ center_y - evalPoly (poly LE cs) center_x) / 1E20
->   in (length coeffs, \cs -> cost1 cs + cost2 cs + cost3 cs)
+>   in (length coeffs, [("change coeffs", cost1), ("intersection", cost2), ("centering", cost3)])
 >   where
 
 A coefficient cost function for minimizing coefficients. Given a coefficient
@@ -47,9 +47,11 @@ the optimizer we must to be able to compute its derivative.
 >       coeffConstraint (CoeffExact a)      k = (10 * (a-k))**10
 >       coeffConstraint (CoeffRange (l, r)) k
 >           | l < r =
->               let avg = (r-l)/2
+>               let avg = l + (r-l)/2
 >                   pow = 10
->               in (k - (l + avg)) ** pow / (avg ** pow)
+>               in case ((k - avg) / avg) ** pow of
+>                    c | c < 0.5 -> sigmcost c
+>                      | otherwise -> c
 >           | otherwise = coeffConstraint (CoeffRange (r, l)) k
 
 > -- http://en.wikipedia.org/wiki/Sigmoid_function
