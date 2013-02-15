@@ -1,12 +1,13 @@
-> import System.Console.GetOpt (getOpt, ArgOrder(..))
+> import System.Console.GetOpt
 > import System.Environment (getArgs)
 > import System.Exit (exitWith, ExitCode(..))
-> import System.IO (hPutStrLn, stderr)
+> import System.IO (hPutStr, hPutStrLn, stderr)
 
 > import Data.Data
 > import Data.List
 > import Data.Maybe
 > import Data.Generics
+> import Control.Monad (when)
 
 The chart is described by some DSL. It is useful to visually
 check what that DSL describes. We employ Chart library to draw the graphs.
@@ -35,19 +36,30 @@ intersections, a desired center of the graph, and so on.
 
 > import Debug.Trace
 
+> data Flag = Debug deriving Eq
+> cliOptions :: [OptDescr Flag]
+> cliOptions = [
+>   Option ['d'] ["debug"] (NoArg Debug) "produce useless debug.pdf"
+>  ]
+
 > main = do
 >   args <- getArgs
->   chart <- case getOpt RequireOrder [] args of
->                   (_, [filename], []) -> do
->                       result <- parseFromFile parseChart filename
->                       case result of
->                           Left err  -> do
->                               hPutStrLn stderr (show err)
->                               exitWith (ExitFailure 1)
->                           Right xs  -> return xs
->                   (_, _, errs) -> do
->                       hPutStrLn stderr (concat errs ++ "Usage: explain-chart <filename>")
->                       exitWith (ExitFailure 1)
+>   (cliFlags, chart) <- case getOpt RequireOrder cliOptions args of
+>       (flags, [filename], []) -> do
+>           result <- parseFromFile parseChart filename
+>           case result of
+>               Left err  -> do
+>                   hPutStrLn stderr (show err)
+>                   exitWith (ExitFailure 1)
+>               Right xs  -> return (flags, xs)
+>       (flags, _, errs) -> do
+>           let hdr = "Usage: explain-chart [OPTIONS] <filename>"
+>           hPutStr stderr (concat errs ++ usageInfo hdr cliOptions)
+>           exitWith (ExitFailure 1)
+
+Define some helpers for the command line options processing.
+
+>   let whenFlag flag m = when (flag `elem` cliFlags) m
 
 Figure out the chart dimensions.
 
@@ -74,10 +86,11 @@ of their intersections.
 >        $ plot_lines_title ^= name
 >        $ defaultPlotLines
 > 
->   mapM_ (\s ->
->       let ((name, f), (_, cfs)) = reify_shape (xmin,xmax) (ymin,ymax) s
->       in plot_cost_functions name ((-10, 10), (-10, 10)) cfs
->       ) shapes
+>   whenFlag Debug $
+>       mapM_ (\s ->
+>           let ((name, f), (_, cfs)) = reify_shape (xmin,xmax) (ymin,ymax) s
+>           in plot_cost_functions name ((-10, 10), (-10, 10)) cfs
+>           ) shapes
 > 
 >   let plots = zipWith (\c -> plot_lines_style .> line_color ^= opaque c)
 >                       (cycle colors)
