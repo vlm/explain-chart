@@ -2,12 +2,12 @@
 /*
  * Save the graphical representation of this chart under the given name.
  */
-save "foo.pdf"
+save "example.pdf"
 
 /*
- * By default, we treat both axis ranges as [0..10].
+ * By default, we treat both axis ranges as [0..100].
  */
-x-axis range 0..20 labeled
+x-axis range 0..20 labeled "X-Axis"
 y-axis range 0..30 labeled
 
 /*

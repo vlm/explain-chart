@@ -66,8 +66,8 @@ Define some helpers for the command line options processing.
 
 Figure out the chart dimensions.
 
->   let (xmin, xmax, xlabeled) = getAxisRange X chart
->   let (ymin, ymax, ylabeled) = getAxisRange Y chart
+>   let (xmin, xmax, xaxis) = getAxis X chart
+>   let (ymin, ymax, yaxis) = getAxis Y chart
 
 Decide to plot 1000 points in each dimension unit.
 Define the y range limits appropriately, to make the chart at least as
@@ -118,8 +118,10 @@ text comes at the very end of the output.
 >         plot_hidden_y_values_ = [ymin, ymax]
 >       }
 >   let layout =
->          layout1_bottom_axis .> laxis_override ^= axisTicksAtLabels . (if xlabeled then id else axisLabelsHide . axisTicksHide)
->          $ layout1_left_axis .> laxis_override ^= axisTicksAtLabels . (if ylabeled then id else axisLabelsHide . axisTicksHide)
+>          layout1_bottom_axis .> laxis_override ^= axisTicksAtLabels . (if labeled xaxis then id else axisLabelsHide . axisTicksHide)
+>          $ layout1_left_axis .> laxis_override ^= axisTicksAtLabels . (if labeled yaxis then id else axisLabelsHide . axisTicksHide)
+>          $ case title xaxis of Nothing -> id; Just t -> layout1_bottom_axis .> laxis_title ^= t
+>          $ case title yaxis of Nothing -> id; Just t -> layout1_left_axis .> laxis_title ^= t
 >          $ layout1_plots ^= [Left (toPlot p) | p <- plots] ++
 >                             [Left (toPlot hidden_range)]
 >          $ defaultLayout1
@@ -180,12 +182,12 @@ function (\x -> f x).
 >   axis_ticks_ = concatMap (\(x, _label) -> [(x, 5),(x, -5)]) $ head al
 >  }
 
-> getAxisRange kind chart =
+> getAxis kind chart =
 >   let axis_prop_guesses =
->          map (\axis -> (range_min axis, range_max axis, labeled axis))
+>          map (\axis -> (range_min axis, range_max axis, axis))
 >          $ filter (\axis -> kind == axis_kind axis)
->          $ (collect chart :: [Axis])
->   in head (axis_prop_guesses ++ [(0, 100, True)])
+>          $ (collect chart :: [Axis]) ++ [defaultAxis]
+>   in head axis_prop_guesses
 
 > colors = [ rgb r g b |
 >             r <- [1, 0, 0.5],

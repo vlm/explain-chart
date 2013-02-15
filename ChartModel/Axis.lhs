@@ -15,7 +15,7 @@ as representing the following axis layout:
       <----------+----------> x
       -10        0        10
 
-> module ChartModel.Axis (Axis(..), AxisKind(..), parseAxis) where
+> module ChartModel.Axis (Axis(..), AxisKind(..), defaultAxis, parseAxis) where
 
 > import ChartModel.Parser
 > import Data.Data
@@ -31,6 +31,8 @@ can be labeled or unlabeled (if the range is not important).
 >       labeled   :: Bool,
 >       title     :: Maybe String
 >       } deriving (Show, Data, Typeable)
+
+> defaultAxis = Axis undefined 0 100 False Nothing
 
 > parseAxisKind =   (reserved "x-axis" >> return X)
 >               <|> (reserved "y-axis" >> return Y)
