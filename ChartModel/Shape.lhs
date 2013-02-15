@@ -30,7 +30,7 @@ Shape is a collection of regular drawing primitives: lines, curves, etc.
 
 > guess_coefficient xrange yrange (CoeffExact c) = c
 > guess_coefficient xrange yrange (CoeffRange (l, r)) = l + (r-l)/2
-> guess_coefficient xrange (top_right_quadrant -> (yl,yr)) (CoeffAny) = yr
+> guess_coefficient xrange (top_right_quadrant -> (yl,yr)) (CoeffAny) = (yr-yl)/2
 
 > data Shape = forall a. (Show a, PolyShape a, Data a, Typeable a) => Shape {
 >               name :: String,

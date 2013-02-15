@@ -17,7 +17,7 @@ Neg2points2 and none intersect at (10, 10)
 /*
  * Debug section
  */
-//check polynomial coefficients for NegCentered [45.5 ± 0.5, -3.5 ± 1]
-check polynomial coefficients for Neg5x5 [22.85, -3.57]
+check polynomial coefficients for NegCentered [67.43, -3.5]
+check polynomial coefficients for Neg5x5 [21.57, -3.31]
 check polynomial coefficients for Neg2points [15, -2]
 check polynomial coefficients for Neg2points2 [20, -1]
