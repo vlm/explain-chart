@@ -1,3 +1,4 @@
+> {-# LANGUAGE BangPatterns #-}
 > import System.Console.GetOpt
 > import System.Environment (getArgs)
 > import System.Exit (exitWith, ExitCode(..))
@@ -91,7 +92,21 @@ of their intersections.
 >           let ((name, f), (_, cfs)) = reify_shape (xmin,xmax) (ymin,ymax) s
 >           in plot_cost_functions name ((-10, 10), (-10, 10)) cfs
 >           ) shapes
-> 
+
+The chart file may include assertions for the coefficient ranges. Check
+them there and terminate program if they do not match. We use BangPattern
+here in order to flush out the trace messages and make sure the failure
+text comes at the very end of the output.
+
+>   maybeErrs <- mapM (\s ->
+>       let !((name, f), (final_coeffs, cfs)) = reify_shape (xmin,xmax) (ymin,ymax) s in
+>       return $ check_coefficients name chart final_coeffs
+>       ) shapes
+>   when (not $ null $ catMaybes maybeErrs) $ do
+>       hPutStrLn stderr (intercalate "\n" $ catMaybes maybeErrs)
+>       exitWith (ExitFailure 2)
+
+
 >   let plots = zipWith (\c -> plot_lines_style .> line_color ^= opaque c)
 >                       (cycle colors)
 >                       (map plot_of_shape shapes)
@@ -106,7 +121,7 @@ of their intersections.
 >          $ layout1_plots ^= [Left (toPlot p) | p <- plots] ++
 >                             [Left (toPlot hidden_range)]
 >          $ defaultLayout1
->   mapM_ (renderableToPDFFile (toRenderable layout) 500 500 . show)
+>   mapM_ (renderableToPDFFile (toRenderable layout) 400 400 . show)
 >         (collect chart :: [Filename])
 
 Concretize vague shape coefficients by optimizing for intersections,
@@ -120,7 +135,8 @@ function (\x -> f x).
 >       cy = center_y shape yrange
 >       (degree, cost_functions) = costFunction (cx, cy) coeff_guesses (map sp_xy intersections)
 >       cost_f cs = sum $ map (flip snd cs) cost_functions
->       (final_coeffs, _) = trace ("Coefficient guesses for " ++ name ++ ": " ++ show coeff_guesses) $
+>       (final_coeffs, _) = trace ("Coefficient guesses for " ++ name ++ ": "
+>                                  ++ show coeff_guesses) $
 >                           minimize NMSimplex2 1E-5 1000 (replicate degree 20) cost_f (replicate degree 1)
 >   in trace ("Final coefficients " ++ show final_coeffs)
 >            ((name, evalPoly (poly LE final_coeffs)), (final_coeffs, cost_functions))

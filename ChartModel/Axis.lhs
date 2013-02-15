@@ -46,12 +46,12 @@ Parse range is ambiguous. 0..1 may confuse the floating point parser due to
 the dots which look like a beginning of the floating point.
 
 > parseRange = do
->   left <- choice [try $ fmap toDouble naturalOrFloat,
->                   try $ fmap fromIntegral natural]
+>   left <- choice [try signedNaturalOrFloat,
+>                   try $ fmap fromIntegral integer]
 >   reservedOp ".."
->   right <- fmap toDouble naturalOrFloat
->   return (left, right)
->   where
->     toDouble (Left i) = fromIntegral i
->     toDouble (Right d) = d
+>   right <- signedNaturalOrFloat
+>   case compare left right of
+>       LT -> return (left, right)
+>       EQ -> unexpected "Expected non-zero axis range"
+>       GT -> return (right, left)
 

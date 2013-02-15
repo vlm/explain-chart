@@ -1,24 +1,16 @@
-> module ChartModel.Constraints (costFunction) where
+> module ChartModel.Constraints (costFunction, testMinimize) where
 
 > import Math.Polynomial
 > import ChartModel.Shape
 
+Modules for debugging and testMinimize. Not strictly needed here.
+
+> import Numeric.GSL.Minimization
+> import Data.Packed.Matrix
+> import Graphics.Plot
+
 Given a polynome of degree D and a list of coordinate pairs which lie
 on that polynome, we produce a cost function for minimizing the coefficients.
-
- let (l,f) = costFunction (10,10) [CoeffAny, CoeffRange (2,4)] [(5,15)]
- let cs = fst $ minimize NMSimplex2 1E-5 1000 (replicate l 10) f (replicate l 1)
- let p = evalPoly (poly LE cs)
- let range = [0..20.0] in mplot $ [fromList $ range, fromList $ map p range]
-
-or
-
-let f r c i = let (l,f) = costFunction r c i in
-let cs = fst $ minimize NMSimplex2 1E-5 10000 (replicate l 10) f (replicate l 1) in
-let p = evalPoly (poly LE cs) in let range = [0..20.0] in do { mplot $ [fromList $ range, fromList $ map p range]; print cs; print (fst r, p $ snd r); print (map (p . fst) i) }
-
-
-f (10,10) [CoeffExact 10, CoeffRange (0.5,1.5)] []
 
 Compute cost given such constraints as a desired center of the shape
 (which may differ between lines and parabolas), the list of intersections,
@@ -34,7 +26,7 @@ and the initial values or ranges for the coefficients.
 >       -- ax+b=y, cs=[b,a], x and y are known. Minimize (y-(ax+b))^n.
 >       intersection_constraint cs (x, y) = abs (y - evalPoly (poly LE cs) x)
 >       -- If no other constraints are in place, the graphs are centered.
->       cost3 cs = (sigmcost $ center_y - evalPoly (poly LE cs) center_x) / 1E20
+>       cost3 cs = (sigmcost (center_y - evalPoly (poly LE cs) center_x)) / 1E20
 >   in (length coeffs, [("change coeffs", cost1), ("intersection", cost2), ("centering", cost3)])
 >   where
 
@@ -58,4 +50,21 @@ the optimizer we must to be able to compute its derivative.
 > -- sigm is a function which looks like right side
 > -- of sigmoid replicated to the left and with sigmcost 0 = 0.
 > sigmcost x = (1 / (1 + exp (- abs x)) - 0.5)
+
+Usage:
+
+$ ghci ChartModel/Constraints.lhs
+ghci> testMinimize (10, 10) [CoeffAny, CoeffRange (-1,-2)] [] 
+
+> testMinimize :: (Double, Double) -> [Coefficient Double] -> [(Double, Double)] -> IO [Double]
+> testMinimize center coeffs coords =
+>   let (degree, cost_functions) = costFunction center coeffs coords 
+>       cost_f cs = sum $ map (flip snd cs) cost_functions
+>       (min, p) = minimize NMSimplex2 1E-5 100
+>                       (replicate degree 20) cost_f (replicate degree 1)
+>   in
+>   do
+>       mplot (drop 3 (toColumns p))
+>       return min
+
 

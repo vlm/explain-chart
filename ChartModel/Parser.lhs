@@ -8,9 +8,9 @@ See also:
     http://book.realworldhaskell.org/read/using-parsec.html
 
 > module ChartModel.Parser (run, whiteSpace, identifier,
->                           natural, naturalOrFloat, parens,
+>                           integer, natural, naturalOrFloat, signedNaturalOrFloat,
 >                           reserved, reservedOp, comma, commaSep1,
->                           stringLiteral,
+>                           parens, brackets, stringLiteral,
 >                           module Text.Parsec.Prim,
 >                           module Text.Parsec.Char,
 >                           module Text.Parsec.String,
@@ -38,7 +38,7 @@ Our language is based on C comments syntax.
 >       , P.identStart     = letter
 >       , P.identLetter    = alphaNum <|> oneOf "-_'"
 >       , P.reservedNames  = echart_keywords
->       , P.reservedOpNames= ["=", "..", ","]
+>       , P.reservedOpNames= ["=", "..", ",", "±", "+-"]
 >       , P.caseSensitive  = False
 >       }
 
@@ -48,7 +48,8 @@ Our language is based on C comments syntax.
 >                    "slope", "vertical", "horizontal",
 >                    "x-axis", "y-axis", "range",
 >                    "intersect", "at", "and",
->                    "unlabeled", "labeled"]
+>                    "unlabeled", "labeled",
+>                    "check", "polynomial", "coefficients", "for"]
 
 > lexer :: P.TokenParser ()
 > lexer = P.makeTokenParser echartLangStyle
@@ -56,11 +57,26 @@ Our language is based on C comments syntax.
 > whiteSpace = P.whiteSpace lexer
 > lexeme     = P.lexeme lexer
 > symbol     = P.symbol lexer
+> integer    = P.integer lexer
 > natural    = P.natural lexer
-> naturalOrFloat    = P.naturalOrFloat lexer
+> naturalOrFloat  = do
+>       v <- P.naturalOrFloat lexer
+>       return $ case v of
+>                   Left n  -> fromIntegral n
+>                   Right d -> d
+> signedNaturalOrFloat  = try $ do
+>   s <- sign
+>   v <- naturalOrFloat
+>   return (s v)
+>   where sign = (char '-' >> return negate)
+>                <|> (char '+' >> return id)
+>                <|> return id
+
+
 > comma      = P.comma lexer
 > commaSep1  = P.commaSep1 lexer
 > parens     = P.parens lexer
+> brackets   = P.brackets lexer
 > operator   = P.operator lexer
 > semi       = P.semi lexer
 > identifier = P.identifier lexer

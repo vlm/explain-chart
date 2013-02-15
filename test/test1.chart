@@ -1,0 +1,23 @@
+
+save "test1.pdf"
+
+x-axis range 0..20 labeled
+y-axis range 0..20 labeled
+
+NegCentered = line with steeply negative slope
+Neg5x5 = line with steeply negative slope
+Neg2points = line with steeply negative slope
+Neg2points2 = line with steeply negative slope
+
+Neg5x5 and Neg2points intersect at (5, 5)
+Neg2points and none intersect at (0, 15)
+Neg2points2 and none intersect at (15, 5)
+Neg2points2 and none intersect at (10, 10)
+
+/*
+ * Debug section
+ */
+check polynomial coefficients for NegCentered [45.5 ± 0.5, -3.5 ± 1]
+check polynomial coefficients for Neg5x5 [21.8, -3.37]
+check polynomial coefficients for Neg2points [15, -2]
+check polynomial coefficients for Neg2points2 [20, -1]
