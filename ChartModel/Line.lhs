@@ -95,10 +95,10 @@ Parse the line specification.
 > parseLineKind = choice [
 >     reserved "positive" >> return Positive,
 >     reserved "negative" >> return Negative,
->     reserved "slightly" >> choice [
+>     choice [reserved "slight", reserved "slightly"] >> choice [
 >              reserved "positive" >> return SlightPositive,
 >              reserved "negative" >> return SlightNegative ],
->     reserved "steeply" >> choice [
+>     choice [reserved "steep", reserved "steeply"] >> choice [
 >              reserved "positive" >> return SteepPositive,
 >              reserved "negative" >> return SteepNegative ],
 >     reserved "horizontal">> return Horizontal

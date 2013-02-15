@@ -42,7 +42,8 @@ Our language is based on C comments syntax.
 >       , P.caseSensitive  = False
 >       }
 
-> echart_keywords = ["save", "line", "with", "slightly", "steeply",
+> echart_keywords = ["save", "line", "with",
+>                    "slight", "slightly", "steep", "steeply",
 >                    "negative", "positive",
 >                    "slope", "vertical", "horizontal",
 >                    "x-axis", "y-axis", "range",
