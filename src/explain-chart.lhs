@@ -35,12 +35,13 @@ intersections, a desired center of the graph, and so on.
 > import ChartModel.Primitives
 > import ChartModel.Parser
 
-> import Debug.Trace
+> import qualified Debug.Trace as Dbg
 
-> data Flag = Debug deriving Eq
+> data Flag = Verbose | Debug deriving Eq
 > cliOptions :: [OptDescr Flag]
 > cliOptions = [
->   Option ['d'] ["debug"] (NoArg Debug) "produce useless debug.pdf"
+>   Option ['v'] ["verbose"] (NoArg Verbose) "dump more debugging info",
+>   Option ['d'] ["debug"]   (NoArg Debug) "produce useless debug.pdf"
 >  ]
 
 > main = do
@@ -61,6 +62,7 @@ intersections, a desired center of the graph, and so on.
 Define some helpers for the command line options processing.
 
 >   let whenFlag flag m = when (flag `elem` cliFlags) m
+>   let trace = if (Verbose `elem` cliFlags) then Dbg.trace else (flip const)
 
 Figure out the chart dimensions.
 
@@ -81,7 +83,7 @@ of their intersections.
 >   let shapes = collect chart' :: [Shape]
 
 >   let plot_of_shape shape =
->        let ((name, f), _) = reify_shape (xmin,xmax) (ymin,ymax) shape in
+>        let ((name, f), _) = reify_shape trace (xmin,xmax) (ymin,ymax) shape in
 >        plot_lines_values ^= [[ (x, f x) | x <- xcoords, f x < ymax, f x > ymin]]
 >        $ plot_lines_limit_values ^= ylimits
 >        $ plot_lines_title ^= name
@@ -89,7 +91,7 @@ of their intersections.
 > 
 >   whenFlag Debug $
 >       mapM_ (\s ->
->           let ((name, f), (_, cfs)) = reify_shape (xmin,xmax) (ymin,ymax) s
+>           let ((name, f), (_, cfs)) = reify_shape trace (xmin,xmax) (ymin,ymax) s
 >           in plot_cost_functions name ((-10, 10), (-10, 10)) cfs
 >           ) shapes
 
@@ -99,7 +101,7 @@ here in order to flush out the trace messages and make sure the failure
 text comes at the very end of the output.
 
 >   maybeErrs <- mapM (\s ->
->       let !((name, f), (final_coeffs, cfs)) = reify_shape (xmin,xmax) (ymin,ymax) s in
+>       let !((name, f), (final_coeffs, cfs)) = reify_shape trace (xmin,xmax) (ymin,ymax) s in
 >       return $ check_coefficients name chart final_coeffs
 >       ) shapes
 >   when (not $ null $ catMaybes maybeErrs) $ do
@@ -128,17 +130,20 @@ Concretize vague shape coefficients by optimizing for intersections,
 shape center, and other constraints. Returns a name and the evaluation
 function (\x -> f x).
 
-> reify_shape xrange yrange (Shape name shape intersections) =
+> reify_shape trace xrange yrange (Shape name shape intersections) =
 >   let
->       coeff_guesses = coefficients shape xrange yrange
+>       coeff_constraints = coefficients shape xrange yrange
+>       coeff_init_guess = coeff_initial_guess shape xrange yrange
 >       cx = center_x shape xrange
 >       cy = center_y shape yrange
->       (degree, cost_functions) = costFunction (cx, cy) coeff_guesses (map sp_xy intersections)
+>       (degree, cost_functions) = costFunction (cx, cy) coeff_constraints (map sp_xy intersections)
 >       cost_f cs = sum $ map (flip snd cs) cost_functions
->       (final_coeffs, _) = trace ("Coefficient guesses for " ++ name ++ ": "
->                                  ++ show coeff_guesses) $
->                           minimize NMSimplex2 1E-5 1000 (replicate degree 20) cost_f (replicate degree 1)
->   in trace ("Final coefficients " ++ show final_coeffs)
+>       search_box = [abs cx + abs cy] ++ replicate (degree - 1) 1.0
+>       (final_coeffs, p) = Dbg.trace ("Coefficient constrains for "
+>                           ++ name ++ ": " ++ show coeff_constraints)
+>           $ minimize NMSimplex2 1E-5 100 search_box cost_f coeff_init_guess
+>   in trace (show p)
+>            $ Dbg.trace ("Final coefficients " ++ show final_coeffs)
 >            ((name, evalPoly (poly LE final_coeffs)), (final_coeffs, cost_functions))
 
 > plot_cost_functions name ((xl, xr), (yl, yr)) cfs =

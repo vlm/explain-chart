@@ -28,7 +28,8 @@ can be labeled or unlabeled (if the range is not important).
 >       axis_kind :: AxisKind,
 >       range_min :: Double,
 >       range_max :: Double,
->       labeled   :: Bool
+>       labeled   :: Bool,
+>       title     :: Maybe String
 >       } deriving (Show, Data, Typeable)
 
 > parseAxisKind =   (reserved "x-axis" >> return X)
@@ -40,7 +41,8 @@ can be labeled or unlabeled (if the range is not important).
 >     (left, right) <- parseRange
 >     isLabeled <-   (reserved "labeled" >> return True)
 >                <|> (reserved "unlabeled" >> return False)
->     return (Axis axisKind left right isLabeled)
+>     title <- fmap Just stringLiteral <|> return Nothing
+>     return (Axis axisKind left right isLabeled title)
 
 Parse range is ambiguous. 0..1 may confuse the floating point parser due to
 the dots which look like a beginning of the floating point.

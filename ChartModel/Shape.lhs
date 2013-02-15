@@ -1,4 +1,4 @@
-> {-# LANGUAGE ExistentialQuantification, RankNTypes, DeriveDataTypeable #-}
+> {-# LANGUAGE ExistentialQuantification, DeriveDataTypeable, ViewPatterns #-}
 
 > module ChartModel.Shape (Shape(..),
 >                          PolyShape(..),
@@ -24,6 +24,13 @@ Shape is a collection of regular drawing primitives: lines, curves, etc.
 >    center_y :: a -> (Double, Double) -> Double
 >    center_y _ = center_in_top_right_quadrant
 >    coefficients :: a -> (Double, Double) -> (Double, Double) -> [Coefficient Double] -- Little-Endian, e.g. b+ax+cx^2
+>    coeff_initial_guess :: a -> (Double, Double) -> (Double, Double) -> [Double]
+>    coeff_initial_guess a xrange yrange =
+>       map (guess_coefficient xrange yrange) (coefficients a xrange yrange)
+
+> guess_coefficient xrange yrange (CoeffExact c) = c
+> guess_coefficient xrange yrange (CoeffRange (l, r)) = l + (r-l)/2
+> guess_coefficient xrange (top_right_quadrant -> (yl,yr)) (CoeffAny) = yr
 
 > data Shape = forall a. (Show a, PolyShape a, Data a, Typeable a) => Shape {
 >               name :: String,
