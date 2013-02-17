@@ -141,7 +141,7 @@ function (\x -> f x).
 >       (degree, cost_functions) = costFunction (cx, cy) coeff_constraints (map sp_xy intersections)
 >       cost_f cs = sum $ map (flip snd cs) cost_functions
 >       search_box = [abs cx + abs cy] ++ replicate (degree - 1) 1.0
->       (final_coeffs, p) = Dbg.trace (name ++ ": Constrains: "
+>       (final_coeffs, p) = Dbg.trace (name ++ ": Constraints: "
 >                           ++ show coeff_constraints)
 >           $ minimize NMSimplex2 1E-5 100 search_box cost_f coeff_init_guess
 >   in trace (show p)
