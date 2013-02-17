@@ -27,9 +27,15 @@ where intersections occur.
 >       } deriving (Show, Data, Typeable)
 
 > parseIntersection = do
->     shapes <- andSep2 identifier
->     reserved "intersect"
->     reserved "at"
+>     shapes <- choice [ try $ do
+>                           shapes <- andSep2 identifier
+>                           mapM reserved ["intersect", "at"]
+>                           return shapes
+>                       , try $ do
+>                           shape <- identifier
+>                           mapM reserved ["goes", "through"]
+>                           return [shape]
+>                       ]
 >     ints <- (parens $ do
 >                   x <- fmap fromIntegral natural
 >                   comma

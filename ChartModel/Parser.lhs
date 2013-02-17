@@ -48,8 +48,9 @@ Our language is based on C comments syntax.
 >                    "slope", "vertical", "horizontal",
 >                    "x-axis", "y-axis", "range",
 >                    "intersect", "at", "and",
+>                    "goes", "through",
 >                    "unlabeled", "labeled",
->                    "check", "polynomial", "coefficients", "for"]
+>                    "check", "coefficients"]
 
 > lexer :: P.TokenParser ()
 > lexer = P.makeTokenParser echartLangStyle

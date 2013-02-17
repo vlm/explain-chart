@@ -1,0 +1,21 @@
+
+save "test4.pdf"
+
+x-axis range 0..20 labeled
+y-axis range 0..30 labeled
+
+/*
+ * Define multiple lines.
+ */
+Parabola = parabola
+InvParabola = inverted parabola
+
+/*
+ * Say that these lines intersect at a particular point.
+ */
+Parabola goes through (5, 10) and (7, 10)
+Parabola and InvParabola intersect at (10, 15)
+InvParabola goes through (5, 10) and (15, 10)
+
+check Parabola coefficients [21.55, -4, 0.33 ± 0.01]
+check InvParabola coefficients [-5, 4, -0.2]

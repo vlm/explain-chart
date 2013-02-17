@@ -26,9 +26,8 @@ InvParabola = inverted parabola
 Pos and SteepPos and Parabola intersect at (5, 10)
 Pos and SlightPos and Parabola and InvParabola intersect at (10, 15)
 SteepPos and Neg intersect at (10, 20)
-Parabola and n intersect at (7, 10)
-InvParabola and n intersect at (5, 10)
-InvParabola and n intersect at (15, 10)
+Parabola goes through (7, 10)
+InvParabola goes through (5, 10) and (15, 10)
 
 /*
  * You can also add more intersection points, as well as more shape names:

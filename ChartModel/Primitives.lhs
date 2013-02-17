@@ -55,15 +55,16 @@ Primitive is a collection of all the labels, axes, shapes, etc.
 Parse debugging assertion which checks whether polynomial coefficients
 lie in a specified range.
 
-check polynomial coefficients for Line1 [45.5 ± 0.5, -3.5 ± 1]
+    check Line1 coefficients [45.5 ± 0.5, -3.5 ± 1]
 
 > data CoeffCheck = CoeffCheck {
 >           cc_shape_name :: String,
 >           cc_coeffs     :: [(Double, Double)]
 >       } deriving (Show, Data, Typeable)
 > parseCoeffCheck = do
->   mapM_ reserved ["check", "polynomial", "coefficients", "for"]
+>   reserved "check"
 >   name <- identifier
+>   reserved "coefficients"
 >   coeffs <- brackets $ commaSep1 valueAndRange
 >   return (CoeffCheck name coeffs)
 >   where
