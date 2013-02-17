@@ -54,8 +54,6 @@ executable explain-chart
   -- .hs or .lhs file containing the Main module.
   main-is:             explain-chart.lhs
 
-  extensions:           DeriveDataTypeable
-
   --
   -- NOTES
   --

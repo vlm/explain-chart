@@ -1,3 +1,4 @@
+> {-# LANGUAGE DeriveDataTypeable #-}
 
 We should be able to parse
 

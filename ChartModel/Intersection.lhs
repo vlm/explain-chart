@@ -1,3 +1,4 @@
+> {-# LANGUAGE DeriveDataTypeable #-}
 
 To constrain the shapes we should be able to parse
 

@@ -1,4 +1,4 @@
-> {-# LANGUAGE NoMonomorphismRestriction, ImpredicativeTypes #-}
+> {-# LANGUAGE DeriveDataTypeable, NoMonomorphismRestriction #-}
 
 Define primitive constituents of the typical chart: axes, shapes, labels.
 
