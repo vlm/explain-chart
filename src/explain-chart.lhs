@@ -81,7 +81,7 @@ Convert intersections as DSL entities into the corresponding shapes' lists
 of their intersections.
 
 >   let chart' = pushDownIntersections chart
->   let shapes = collect chart' :: [Shape]
+>   let shapes = collect chart'
 
 >   let plot_of_shape shape =
 >        let ((name, f), _) = reify_shape trace (xmin,xmax) (ymin,ymax) shape in
@@ -182,15 +182,16 @@ function (\x -> f x).
 >   where sigmoid t = t / (1 + exp(-t))
 
 > axisTicksAtLabels ad@(AxisData { axis_labels_ = al }) = ad {
->   axis_ticks_ = concatMap (\(x, _label) -> [(x, 5),(x, -5)]) $ head al
+>   axis_ticks_ = if null al then [] else concatMap (\(x, _label) -> [(x, 5),(x, -5)]) $ head al
 >  }
 
 > getAxis kind chart =
 >   let axis_prop_guesses =
->          map (\axis -> (range_min axis, range_max axis, axis))
+>          map extract
 >          $ filter (\axis -> kind == axis_kind axis)
->          $ (collect chart :: [Axis]) ++ [defaultAxis]
->   in head axis_prop_guesses
+>          $ collect chart
+>   in head (axis_prop_guesses ++ [extract $ defaultAxis kind])
+>   where extract axis = (range_min axis, range_max axis, axis)
 
 Produce a list of distinctive colors. The colors should not be too bright,
 so we limit the total brightness to 1.7 out of 3.

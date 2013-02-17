@@ -32,7 +32,7 @@ can be labeled or unlabeled (if the range is not important).
 >       title     :: Maybe String
 >       } deriving (Show, Data, Typeable)
 
-> defaultAxis = Axis undefined 0 100 False Nothing
+> defaultAxis kind = Axis kind 0 100 False Nothing
 
 > parseAxisKind =   (reserved "x-axis" >> return X)
 >               <|> (reserved "y-axis" >> return Y)
