@@ -1,4 +1,4 @@
-> {-# LANGUAGE NoMonomorphismRestriction #-}
+> {-# LANGUAGE NoMonomorphismRestriction, ImpredicativeTypes #-}
 
 Define primitive constituents of the typical chart: axes, shapes, labels.
 
@@ -7,6 +7,7 @@ Define primitive constituents of the typical chart: axes, shapes, labels.
 >                               collect, collectMap, check_coefficients,
 >                               module ChartModel.Axis,
 >                               module ChartModel.Line,
+>                               module ChartModel.Parabola,
 >                               module ChartModel.Constraints,
 >                               module ChartModel.Shape,
 >                               module ChartModel.SpecialPoint,
@@ -17,10 +18,13 @@ Define primitive constituents of the typical chart: axes, shapes, labels.
 > import Data.Maybe
 > import Data.Data
 > import Data.Generics
+> import Data.Functor.Identity
 
 > import ChartModel.Shape
 > import ChartModel.Axis
 > import ChartModel.Line
+> import ChartModel.Parabola
+> import ChartModel.Polynome
 > import ChartModel.Constraints
 > import ChartModel.Intersection
 > import ChartModel.SpecialPoint
@@ -40,7 +44,7 @@ Primitive is a collection of all the labels, axes, shapes, etc.
 >                | MkIntersection Intersection
 >                deriving (Show, Data, Typeable)
 > parseChartStatement =   fmap MkAxis parseAxis
->   <|> try (fmap MkShape (parseAnyShape [parseLine]))
+>   <|> try (fmap MkShape (parseAnyShape ([fmap PolyWrap parseLine, fmap PolyWrap parseParabola])))
 >   <|> try (fmap MkSave (fmap Filename $ reserved "save" >> stringLiteral))
 >   <|> try (fmap MkCoeffCheck parseCoeffCheck)
 >   <|> try (fmap MkIntersection parseIntersection)

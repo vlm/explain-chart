@@ -33,6 +33,7 @@ intersections, a desired center of the graph, and so on.
 > import Math.Polynomial
 
 > import ChartModel.Primitives
+> import ChartModel.Geometry
 > import ChartModel.Parser
 
 > import qualified Debug.Trace as Dbg
@@ -140,10 +141,12 @@ function (\x -> f x).
 >       cy = center_y shape yrange
 >       (degree, cost_functions) = costFunction (cx, cy) coeff_constraints (map sp_xy intersections)
 >       cost_f cs = sum $ map (flip snd cs) cost_functions
->       search_box = [abs cx + abs cy] ++ replicate (degree - 1) 1.0
->       (final_coeffs, p) = Dbg.trace (name ++ ": Constraints: "
->                           ++ show coeff_constraints)
->           $ minimize NMSimplex2 1E-5 100 search_box cost_f coeff_init_guess
+>       sbox = search_box shape xrange yrange
+>       !(final_coeffs, p) =
+>        Dbg.trace (name ++ ": Intersections " ++ show intersections)
+>        $ Dbg.trace (name ++ ": Minimize search box: " ++ show sbox)
+>        $ Dbg.trace (name ++ ": Constraint coeffs: " ++ show coeff_constraints)
+>        $ minimize NMSimplex2 1E-5 100 sbox cost_f coeff_init_guess
 >   in trace (show p)
 >        $ Dbg.trace (name ++ ": Guess coefficients " ++ show coeff_init_guess)
 >        $ Dbg.trace (name ++ ": Final coefficients " ++ show final_coeffs)
@@ -188,6 +191,9 @@ function (\x -> f x).
 >          $ filter (\axis -> kind == axis_kind axis)
 >          $ (collect chart :: [Axis]) ++ [defaultAxis]
 >   in head axis_prop_guesses
+
+Produce a list of distinctive colors. The colors should not be too bright,
+so we limit the total brightness to 1.7 out of 3.
 
 > colors = [ rgb r g b |
 >             r <- [1, 0, 0.5],

@@ -54,14 +54,14 @@ the optimizer we must to be able to compute its derivative.
 Usage:
 
 $ ghci ChartModel/Constraints.lhs
-ghci> testMinimize (10, 10) [CoeffAny, CoeffRange (-1,-2)] [] 
+ghci> testMinimize (10, 10) [CoeffAny, CoeffRange (-1,-2)] [] [20,20] [1,1]
 
-> testMinimize :: (Double, Double) -> [Coefficient Double] -> [(Double, Double)] -> IO [Double]
-> testMinimize center coeffs coords =
+> testMinimize :: (Double, Double) -> [Coefficient Double] -> [(Double, Double)] -> [Double] -> [Double] -> IO [Double]
+> testMinimize center coeffs coords box init_coeffs =
 >   let (degree, cost_functions) = costFunction center coeffs coords 
 >       cost_f cs = sum $ map (flip snd cs) cost_functions
 >       (min, p) = minimize NMSimplex2 1E-5 100
->                       (replicate degree 20) cost_f (replicate degree 1)
+>                       box cost_f init_coeffs
 >   in
 >   do
 >       mplot (drop 3 (toColumns p))

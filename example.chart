@@ -17,13 +17,18 @@ Pos = line with steeply positive slope
 SlightPos = line with slightly positive slope
 SteepPos = line with steeply positive slope
 Neg = line with steeply negative slope
+Parabola = parabola
+InvParabola = inverted parabola
 
 /*
  * Say that these lines intersect at a particular point.
  */
-Pos and SteepPos intersect at (5, 10)
-Pos and SlightPos intersect at (10, 15)
+Pos and SteepPos and Parabola intersect at (5, 10)
+Pos and SlightPos and Parabola and InvParabola intersect at (10, 15)
 SteepPos and Neg intersect at (10, 20)
+Parabola and n intersect at (7, 10)
+InvParabola and n intersect at (5, 10)
+InvParabola and n intersect at (15, 10)
 
 /*
  * You can also add more intersection points, as well as more shape names:

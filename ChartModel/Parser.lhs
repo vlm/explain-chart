@@ -39,10 +39,10 @@ Our language is based on C comments syntax.
 >       , P.identLetter    = alphaNum <|> oneOf "-_'"
 >       , P.reservedNames  = echart_keywords
 >       , P.reservedOpNames= ["=", "..", ",", "±", "+-"]
->       , P.caseSensitive  = False
+>       , P.caseSensitive  = True
 >       }
 
-> echart_keywords = ["save", "line", "with",
+> echart_keywords = ["save", "inverted", "parabola", "line", "with",
 >                    "slight", "slightly", "steep", "steeply",
 >                    "negative", "positive",
 >                    "slope", "vertical", "horizontal",

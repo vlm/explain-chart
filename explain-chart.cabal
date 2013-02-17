@@ -76,6 +76,7 @@ executable explain-chart
                        hmatrix ==0.14.*,
                        syb ==0.3.*,
                        Chart ==0.16.*,
+                       transformers ==0.3.*,
                        colour ==2.3.*,
                        data-accessor ==0.2.2.*
 

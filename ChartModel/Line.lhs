@@ -1,4 +1,4 @@
-> {-# LANGUAGE DeriveDataTypeable #-}
+> {-# LANGUAGE DeriveDataTypeable, ViewPatterns #-}
 
 One of the simplest primitives is a simple straight unbounded line,
 corresponding to a formula y = a x + b, where a represents slope
@@ -42,7 +42,7 @@ In our DSL, a line can be introduced via description like
 > import Data.Data
 > import ChartModel.SpecialPoint
 > import ChartModel.Parser
-> import ChartModel.Shape
+> import ChartModel.Polynome
 > import ChartModel.Geometry
 
 We first say that we have 6 kinds of slopes, plus two horizontal (y = const)
@@ -68,11 +68,16 @@ or more of it special points — coordinates that we know lie on the line.
 
 An exact line is certainly an instance of polynome. Reflect it here.
 
-> instance PolyShape Line where
->   coefficients (ExactLine a b) _ _ = [CoeffExact b,
->                                   CoeffExact a]
+> instance Polynomial Line where
+>   coefficients (ExactLine a b) _ _ = [CoeffExact b, CoeffExact a]
 >   coefficients (InformalLine k) xrange yrange = [CoeffAny,
->        CoeffRange (adjust_aspect_ratio xrange yrange $ a_coeff_range_by k)]
+>       CoeffRange (adjust_aspect_ratio xrange yrange $ a_coeff_range_by k)]
+>   coeff_initial_guess a xrange yrange =
+>       map (guess_coeff xrange yrange) (coefficients a xrange yrange)
+
+> guess_coeff xrange yrange (CoeffExact c) = c
+> guess_coeff xrange yrange (CoeffRange range) = average range
+> guess_coeff xrange (top_right_quadrant -> range) CoeffAny = average range
 
 If we knew where the line intersects with another shape, we might be able to
 upgrade a line from InformalLine to ExactLine.
