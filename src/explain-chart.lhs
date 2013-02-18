@@ -115,7 +115,7 @@ text comes at the very end of the output.
 >       ) shapes
 >   when (not $ null $ catMaybes maybeErrs) $ do
 >       hPutStrLn stderr (intercalate "\n" $ catMaybes maybeErrs)
->       exitWith (ExitFailure 2)
+>       when (not $ needLog cliVerbosityLevel Short) $ exitWith (ExitFailure 2)
 
 
 >   let plots = zipWith (\c -> plot_lines_style .> line_color ^= opaque c)
