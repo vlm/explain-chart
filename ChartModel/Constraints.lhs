@@ -48,8 +48,6 @@ the optimizer we must to be able to compute its derivative.
 >       in case ((k - avg) / avg) ** 10 of
 >           c | c < 0.5 -> sigmcost c
 >             | otherwise -> c
->   | k < l = (42 + (l-k)) ** 2
->   | k > r = (42 + (r-k)) ** 2
 >   | lin == NonLinear =
 >       let lavg = log_average (l, r)
 >       in case exp (log k - lavg) - 1 of
