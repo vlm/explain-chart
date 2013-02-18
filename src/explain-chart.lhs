@@ -36,18 +36,18 @@ intersections, a desired center of the graph, and so on.
 > import ChartModel.Geometry
 > import ChartModel.Parser
 
-> import qualified Debug.Trace as Dbg
+> import qualified Debug.Trace
 
 > data Flag = Verbose | Debug deriving Eq
 > cliOptions :: [OptDescr Flag]
 > cliOptions = [
->   Option ['v'] ["verbose"] (NoArg Verbose) "dump more debugging info",
+>   Option ['v'] ["verbose"] (NoArg Verbose) "dump more debugging info (also -vv)",
 >   Option ['d'] ["debug"]   (NoArg Debug) "produce useless debug.pdf"
 >  ]
 
 > main = do
 >   args <- getArgs
->   (cliFlags, chart) <- case getOpt RequireOrder cliOptions args of
+>   (cliFlags, chart) <- case getOpt Permute cliOptions args of
 >       (flags, [filename], []) -> do
 >           result <- parseFromFile parseChart filename
 >           case result of
@@ -61,9 +61,12 @@ intersections, a desired center of the graph, and so on.
 >           exitWith (ExitFailure 1)
 
 Define some helpers for the command line options processing.
+whenFlag executes a monadic computation when a specified flag is set.
+(shout Short|Long) is equivalent to Debug.Trace.trace when the appropriate
+number of "-v" command line options are specified.
 
 >   let whenFlag flag m = when (flag `elem` cliFlags) m
->   let trace = if (Verbose `elem` cliFlags) then Dbg.trace else (flip const)
+>   let shout = makeLogger (length [Verbose | Verbose <- cliFlags])
 
 Figure out the chart dimensions.
 
@@ -84,7 +87,7 @@ of their intersections.
 >   let shapes = collect chart'
 
 >   let plot_of_shape shape =
->        let ((name, f), _) = reify_shape trace (xmin,xmax) (ymin,ymax) shape in
+>        let ((name, f), _) = reify_shape shout (xmin,xmax) (ymin,ymax) shape in
 >        plot_lines_values ^= [[ (x, f x) | x <- xcoords, f x < ymax, f x > ymin]]
 >        $ plot_lines_limit_values ^= ylimits
 >        $ plot_lines_title ^= name
@@ -92,7 +95,7 @@ of their intersections.
 > 
 >   whenFlag Debug $
 >       mapM_ (\s ->
->           let ((name, f), (_, cfs)) = reify_shape trace (xmin,xmax) (ymin,ymax) s
+>           let ((name, f), (_, cfs)) = reify_shape shout (xmin,xmax) (ymin,ymax) s
 >           in plot_cost_functions name ((-10, 10), (-10, 10)) cfs
 >           ) shapes
 
@@ -102,7 +105,7 @@ here in order to flush out the trace messages and make sure the failure
 text comes at the very end of the output.
 
 >   maybeErrs <- mapM (\s ->
->       let !((name, f), (final_coeffs, cfs)) = reify_shape trace (xmin,xmax) (ymin,ymax) s in
+>       let !((name, f), (final_coeffs, cfs)) = reify_shape shout (xmin,xmax) (ymin,ymax) s in
 >       return $ check_coefficients name chart final_coeffs
 >       ) shapes
 >   when (not $ null $ catMaybes maybeErrs) $ do
@@ -126,14 +129,15 @@ text comes at the very end of the output.
 >          $ layout1_plots ^= [Left (toPlot p) | p <- plots] ++
 >                             [Left (toPlot hidden_range)]
 >          $ defaultLayout1
->   mapM_ (renderableToPDFFile (toRenderable layout) 400 400 . show)
->         (collect chart :: [Filename])
+>   flip mapM_ (collect chart :: [Filename]) $ \file -> do
+>       renderableToPDFFile (toRenderable layout) 400 400 (show file)
+>       putStrLn ("Image saved as " ++ show file)
 
 Concretize vague shape coefficients by optimizing for intersections,
 shape center, and other constraints. Returns a name and the evaluation
 function (\x -> f x).
 
-> reify_shape trace xrange yrange (Shape name shape intersections) =
+> reify_shape shout xrange yrange (Shape name shape intersections) =
 >   let
 >       coeff_constraints = coefficients shape xrange yrange
 >       coeff_init_guess = coeff_initial_guess shape xrange yrange
@@ -143,14 +147,14 @@ function (\x -> f x).
 >       cost_f cs = sum $ map (flip snd cs) cost_functions
 >       sbox = search_box shape xrange yrange
 >       !(final_coeffs, p) =
->        Dbg.trace (name ++ ": Intersections " ++ show intersections)
->        $ Dbg.trace (name ++ ": Minimize search box: " ++ show sbox)
->        $ Dbg.trace (name ++ ": Constraint coeffs: " ++ show coeff_constraints)
->        $ minimize NMSimplex2 1E-5 100 sbox cost_f coeff_init_guess
->   in trace (show p)
->        $ Dbg.trace (name ++ ": Guess coefficients " ++ show coeff_init_guess)
->        $ Dbg.trace (name ++ ": Final coefficients " ++ show final_coeffs)
->        ((name, evalPoly (poly LE final_coeffs)), (final_coeffs, cost_functions))
+>           minimize NMSimplex2 1E-5 100 sbox cost_f coeff_init_guess
+>   in shout Long (show p)
+>      $ shout Short (name ++ ": Intersections " ++ show intersections)
+>      $ shout Short (name ++ ": Minimize search box: " ++ show sbox)
+>      $ shout Short (name ++ ": Constraint coeffs: " ++ show coeff_constraints)
+>      $ shout Short (name ++ ": Guess coefficients " ++ show coeff_init_guess)
+>      $ shout Short (name ++ ": Final coefficients " ++ show final_coeffs)
+>      ((name, evalPoly (poly LE final_coeffs)), (final_coeffs, cost_functions))
 
 > plot_cost_functions name ((xl, xr), (yl, yr)) cfs =
 >   let
@@ -202,4 +206,12 @@ so we limit the total brightness to 1.7 out of 3.
 >             b <- [0.5, 0, 1],
 >             r + g + b < 1.7
 >          ]
+
+Create a helper trace function depending on the number of "-v"'s given
+in the command line. VerbosityLevel is really a log level.
+
+> data Verbosity = Short | Long deriving Enum
+> makeLogger requested_level verbosity
+>   | requested_level > fromEnum verbosity = Debug.Trace.trace
+>   | otherwise = flip const
 
