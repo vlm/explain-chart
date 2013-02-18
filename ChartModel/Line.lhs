@@ -71,13 +71,13 @@ An exact line is certainly an instance of polynome. Reflect it here.
 > instance Polynomial Line where
 >   coefficients (ExactLine a b) _ _ = [CoeffExact b, CoeffExact a]
 >   coefficients (InformalLine k) xrange yrange = [CoeffAny,
->       CoeffRange (adjust_aspect_ratio xrange yrange $ a_coeff_range_by k)]
+>       CoeffRange Linear (adjust_aspect_ratio xrange yrange $ a_coeff_range_by k)]
 >   coeff_initial_guess a xrange yrange =
 >       map (guess_coeff xrange yrange) (coefficients a xrange yrange)
 
-> guess_coeff xrange yrange (CoeffExact c) = c
-> guess_coeff xrange yrange (CoeffRange range) = average range
 > guess_coeff xrange (top_right_quadrant -> range) CoeffAny = average range
+> guess_coeff xrange yrange (CoeffRange Linear range) = average range
+> guess_coeff xrange yrange (CoeffExact c) = c
 
 If we knew where the line intersects with another shape, we might be able to
 upgrade a line from InformalLine to ExactLine.

@@ -5,10 +5,10 @@ Compute average of two given values. Easy.
 
 > average (l, r) = l + (r - l) / 2
 
-> log_average b (l, r)
->   | l > 0 && r > 0 = b ** (logBase b l + (logBase b r - logBase b l) / 2)
->   | l < 0 && r < 0 = -1 * log_average b (-l, -r)
->   | l == 0 && r /= 0 = log_average b (r / 1000, r)
+> log_average (l, r)
+>   | l > 0 && r > 0 = exp (log l + (log r - log l) / 2)
+>   | l < 0 && r < 0 = -1 * log_average (-l, -r)
+>   | l == 0 && r /= 0 = log_average (r / 1000, r)
 >   | l == 0 && r == 0 = 0
 >   | otherwise = error ("l = " ++ show l ++ ", r = " ++ show r)
 

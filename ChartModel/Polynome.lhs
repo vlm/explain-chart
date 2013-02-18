@@ -4,6 +4,7 @@
 >                          PolyWrap(..),
 >                          Polynomial(..),
 >                          Coefficient(..),
+>                          Variability(..),
 >                          showPolynome
 >                          ) where
 
@@ -14,8 +15,9 @@
 > import ChartModel.SpecialPoint
 > import ChartModel.Geometry
 
-> data Coefficient a = CoeffExact a | CoeffRange (a, a) | CoeffAny
+> data Coefficient a = CoeffExact a | CoeffRange Variability (a, a) | CoeffAny
 >                      deriving (Eq, Show)
+> data Variability = Linear | NonLinear deriving (Eq, Show)
 
 > data PolyWrap = forall a. (Polynomial a, Show a, Data a, Typeable a) => PolyWrap a deriving Typeable
 > instance Show PolyWrap where
@@ -52,7 +54,7 @@
 
 > default_search_box xrange yrange cf = case cf of
 >       CoeffAny -> 2 * abs_max yrange
->       CoeffRange crange -> 2 * abs_max crange
+>       CoeffRange _ crange -> 2 * abs_max crange
 >       CoeffExact c -> 2 * c
 >   where abs_max (l, r) = max (abs l) (abs r)
 

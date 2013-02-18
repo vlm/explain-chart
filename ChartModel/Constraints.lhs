@@ -1,10 +1,12 @@
-> module ChartModel.Constraints (costFunction, testMinimize) where
+> module ChartModel.Constraints where
 
 > import Math.Polynomial
 > import ChartModel.Shape
+> import ChartModel.Geometry
 
 Modules for debugging and testMinimize. Not strictly needed here.
 
+> import Debug.Trace
 > import Numeric.GSL.Minimization
 > import Data.Packed.Matrix
 > import Graphics.Plot
@@ -24,27 +26,34 @@ and the initial values or ranges for the coefficients.
 >       -- Compute the cost of intersection with coords
 >       cost2 cs = sum (map (intersection_constraint cs) coords)
 >       -- ax+b=y, cs=[b,a], x and y are known. Minimize (y-(ax+b))^n.
->       intersection_constraint cs (x, y) = abs (y - evalPoly (poly LE cs) x)
+>       intersection_constraint cs (x, y) = (y - evalPoly (poly LE cs) x) ** 2
 >       -- If no other constraints are in place, the graphs are centered.
 >       cost3 cs = (sigmcost (center_y - evalPoly (poly LE cs) center_x)) / 1E20
 >   in (length coeffs, [("change coeffs", cost1), ("intersection", cost2), ("centering", cost3)])
->   where
 
 A coefficient cost function for minimizing coefficients. Given a coefficient
 description (Coefficient) and a coefficient candidate, checks whether candiate
 matches the constraints well. The function is not binary: to be admissible to
 the optimizer we must to be able to compute its derivative.
 
->       coeffConstraint CoeffAny            k = 0
->       coeffConstraint (CoeffExact a)      k = (10 * (a-k))**10
->       coeffConstraint (CoeffRange (l, r)) k
->           | l < r =
->               let avg = l + (r-l)/2
->                   pow = 10
->               in case ((k - avg) / avg) ** pow of
->                    c | c < 0.5 -> sigmcost c
->                      | otherwise -> c
->           | otherwise = coeffConstraint (CoeffRange (r, l)) k
+> coeffConstraint CoeffAny            k = 0
+> coeffConstraint (CoeffExact a)      k = (10 * (a-k))**10
+> coeffConstraint cf@(CoeffRange lin (l, r)) k
+>   | signum l * signum r < 0 = error (show cf ++ ": same sign expected")
+>   | l > r = coeffConstraint (CoeffRange lin (r, l)) k
+>   | signum l < 0 = coeffConstraint (CoeffRange lin (-l, -r)) (-k)
+>   | signum k < 0 = coeffConstraint (CoeffRange lin (r - k, r - k)) 0
+>   | lin == Linear =
+>       let avg = average (l, r)
+>       in case ((k - avg) / avg) ** 10 of
+>           c | c < 0.5 -> sigmcost c
+>             | otherwise -> c
+>   | k < l = (42 + (l-k)) ** 2
+>   | k > r = (42 + (r-k)) ** 2
+>   | lin == NonLinear =
+>       let lavg = log_average (l, r)
+>       in case exp (log k - lavg) - 1 of
+>           c -> sigmcost c
 
 > -- http://en.wikipedia.org/wiki/Sigmoid_function
 > -- sigm is a function which looks like right side

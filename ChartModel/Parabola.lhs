@@ -15,17 +15,16 @@
 > instance Polynomial Parabola where
 >   coefficients p xrange yrange = [
 >       CoeffAny,
->       CoeffRange (-1 * par_sign p * fst xrange, -1 * par_sign p * snd xrange),
->       CoeffRange (0.01 * par_sign p, par_sign p)
+>       CoeffRange Linear (-1 * par_sign p * fst xrange, -1 * par_sign p * snd xrange),
+>       CoeffRange NonLinear (0.001 * par_sign p, 1 * par_sign p)
 >    ]
 >   coeff_initial_guess p xrange yrange =
 >       zipWith (guess_coeff p xrange yrange) [0..] (coefficients p xrange yrange)
 
 > guess_coeff (Par Inverted) xrange yrange 0 CoeffAny = 0
 > guess_coeff (Par Proper) xrange (ybtm, ytop) 0 CoeffAny = ytop
-> guess_coeff (Par Inverted) xrange yrange 0 (CoeffRange range) = 0
-> guess_coeff (Par Proper) xrange yrange 0 (CoeffRange range) = average range
-> guess_coeff p xrange yrange _ (CoeffRange range) = log_average 2 range
+> guess_coeff p xrange yrange _ (CoeffRange Linear range) = average range
+> guess_coeff p xrange yrange _ (CoeffRange NonLinear range) = log_average range
 > guess_coeff p xrange yrange _ (CoeffExact c) = c
 
 > parseParabola = do
