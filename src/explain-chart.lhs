@@ -70,8 +70,8 @@ number of "-v" command line options are specified.
 >   let cliVerbosityLevel = length $ filter (==Verbose) cliFlags
 >   let shout = makeLogger cliVerbosityLevel
 >   let
->       lappend (needLog cliVerbosityLevel -> True)  x = mappend x
->       lappend (needLog cliVerbosityLevel -> False) x = mempty
+>       lappend (needLog cliVerbosityLevel -> True)  x y = x `mappend` y
+>       lappend (needLog cliVerbosityLevel -> False) x y = x
 
 Figure out the chart dimensions.
 
