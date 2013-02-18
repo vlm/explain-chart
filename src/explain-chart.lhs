@@ -1,4 +1,4 @@
-> {-# LANGUAGE BangPatterns #-}
+> {-# LANGUAGE BangPatterns, ViewPatterns #-}
 > import System.Console.GetOpt
 > import System.Environment (getArgs)
 > import System.Exit (exitWith, ExitCode(..))
@@ -7,6 +7,7 @@
 > import Data.Data
 > import Data.List
 > import Data.Maybe
+> import Data.Monoid
 > import Data.Generics
 > import Control.Monad (when)
 
@@ -66,7 +67,11 @@ whenFlag executes a monadic computation when a specified flag is set.
 number of "-v" command line options are specified.
 
 >   let whenFlag flag m = when (flag `elem` cliFlags) m
->   let shout = makeLogger (length [Verbose | Verbose <- cliFlags])
+>   let cliVerbosityLevel = length $ filter (==Verbose) cliFlags
+>   let shout = makeLogger cliVerbosityLevel
+>   let
+>       lappend (needLog cliVerbosityLevel -> True)  x = mappend x
+>       lappend (needLog cliVerbosityLevel -> False) x = mempty
 
 Figure out the chart dimensions.
 
@@ -87,10 +92,10 @@ of their intersections.
 >   let shapes = collect chart'
 
 >   let plot_of_shape shape =
->        let ((name, f), _) = reify_shape shout (xmin,xmax) (ymin,ymax) shape in
+>        let ((name, f), (final_coeffs, _)) = reify_shape shout (xmin,xmax) (ymin,ymax) shape in
 >        plot_lines_values ^= [[ (x, f x) | x <- xcoords, f x < ymax, f x > ymin]]
 >        $ plot_lines_limit_values ^= ylimits
->        $ plot_lines_title ^= name
+>        $ plot_lines_title ^= lappend Short name (" " ++ showPolynome final_coeffs)
 >        $ defaultPlotLines
 > 
 >   whenFlag Debug $
@@ -128,9 +133,10 @@ text comes at the very end of the output.
 >          $ case title yaxis of Nothing -> id; Just t -> layout1_left_axis .> laxis_title ^= t
 >          $ layout1_plots ^= [Left (toPlot p) | p <- plots] ++
 >                             [Left (toPlot hidden_range)]
+>          $ layout1_title ^= lappend Short "" " (verbose output)"
 >          $ defaultLayout1
 >   flip mapM_ (collect chart :: [Filename]) $ \file -> do
->       renderableToPDFFile (toRenderable layout) 400 400 (show file)
+>       renderableToPDFFile (toRenderable layout) 500 500 (show file)
 >       putStrLn ("Image saved as " ++ show file)
 
 Concretize vague shape coefficients by optimizing for intersections,
@@ -149,16 +155,14 @@ function (\x -> f x).
 >       !(final_coeffs, p) =
 >           minimize NMSimplex2 1E-5 100 sbox cost_f coeff_init_guess
 >   in shout Long (show p)
->      $ shout Short (name ++ ": Intersections " ++ show intersections)
->      $ shout Short (name ++ ": Minimize search box: " ++ fmt sbox)
->      $ shout Short (name ++ ": Constraint coeffs: " ++ show coeff_constraints)
->      $ shout Short (name ++ ": Guess coefficients " ++ fmt coeff_init_guess)
->      $ shout Short (name ++ ": Final coefficients " ++ fmt final_coeffs)
+>      $ shout Short (name ++ ":")
+>      $ shout Short ("  Intersections " ++ show intersections)
+>      $ shout Short ("  Minimize search box: " ++ show sbox)
+>      $ shout Short ("  Constraint coeffs: " ++ show coeff_constraints)
+>      $ shout Short ("  Guess coefficients " ++ show coeff_init_guess)
+>      $ shout Short ("  Final coefficients " ++ show final_coeffs)
+>      $ shout Short ("  => " ++ showPolynome final_coeffs)
 >      ((name, evalPoly (poly LE final_coeffs)), (final_coeffs, cost_functions))
->   where
->       -- Lower precision to fit the screen better.
->       fmt :: [Double] -> String
->       fmt = show . map (read . show :: Double -> Float)
 
 > plot_cost_functions name ((xl, xr), (yl, yr)) cfs =
 >   let
@@ -215,7 +219,7 @@ Create a helper trace function depending on the number of "-v"'s given
 in the command line. VerbosityLevel is really a log level.
 
 > data Verbosity = Short | Long deriving Enum
-> makeLogger requested_level verbosity
->   | requested_level > fromEnum verbosity = Debug.Trace.trace
->   | otherwise = flip const
+> makeLogger cliLevel (needLog cliLevel -> True) = Debug.Trace.trace
+> makeLogger cliLevel (needLog cliLevel -> False) = flip const
+> needLog cliLevel verbosity = cliLevel > fromEnum verbosity
 

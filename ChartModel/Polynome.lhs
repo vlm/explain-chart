@@ -3,7 +3,8 @@
 > module ChartModel.Polynome (
 >                          PolyWrap(..),
 >                          Polynomial(..),
->                          Coefficient(..)
+>                          Coefficient(..),
+>                          showPolynome
 >                          ) where
 
 > import Data.Data
@@ -54,4 +55,23 @@
 >       CoeffRange crange -> 2 * abs_max crange
 >       CoeffExact c -> 2 * c
 >   where abs_max (l, r) = max (abs l) (abs r)
+
+Show polynome as a formula (ax^2 + bx + c) with acceptable loss of precision
+to shorten the output.
+
+> showPolynome :: [Double] -> String
+> showPolynome = foldr format "" . reverse . zip [0..]
+>  where
+>   show_x 0 d = short d
+>   show_x 1 d = short d ++ "x"
+>   show_x n d = short d ++ "x^" ++ show n
+>   short :: Double -> String
+>   short d | abs d < 0.001 = (show . (read :: String -> Float) . show) d
+>           | otherwise = case round (d * 1000) of
+>                            n | n `rem` 1000 == 0 -> show (n `div` 1000)
+>                              | otherwise -> show $ fromIntegral n / 1000
+>   format (n, d) []         = show_x n d
+>   format (n, d) ('-':rest) = show_x n d ++ " - " ++ rest
+>   format (n, d) rest       = show_x n d ++ " + " ++ rest
+>       
 
