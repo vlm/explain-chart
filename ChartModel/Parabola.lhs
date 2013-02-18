@@ -1,6 +1,6 @@
 > {-# LANGUAGE DeriveDataTypeable, ViewPatterns #-}
 
-> module ChartModel.Parabola (Parabola(..), parseParabola) where
+> module ChartModel.Parabola (Parabola, parseParabola) where
 
 > import Data.Data
 > import ChartModel.SpecialPoint
@@ -8,8 +8,8 @@
 > import ChartModel.Polynome
 > import ChartModel.Geometry
 
-> data Parabola = Par { inverted :: Bool }
->           deriving (Show, Data, Typeable)
+> data Parabola = Par ParType deriving (Show, Data, Typeable)
+> data ParType = Proper | Inverted deriving (Show, Data, Typeable)
 
 
 > instance Polynomial Parabola where
@@ -21,18 +21,17 @@
 >   coeff_initial_guess p xrange yrange =
 >       zipWith (guess_coeff p xrange yrange) [0..] (coefficients p xrange yrange)
 
+> guess_coeff (Par Inverted) xrange yrange 0 CoeffAny = 0
+> guess_coeff (Par Proper) xrange (ybtm, ytop) 0 CoeffAny = ytop
+> guess_coeff (Par Inverted) xrange yrange 0 (CoeffRange range) = 0
+> guess_coeff (Par Proper) xrange yrange 0 (CoeffRange range) = average range
+> guess_coeff p xrange yrange _ (CoeffRange range) = log_average 2 range
 > guess_coeff p xrange yrange _ (CoeffExact c) = c
-> guess_coeff (Par True) xrange yrange 0 (CoeffRange range) = 0
-> guess_coeff (Par False) xrange yrange 0 (CoeffRange range) = average range
-> guess_coeff p xrange yrange 1 (CoeffRange range) = log_average 2 range
-> guess_coeff p xrange yrange 2 (CoeffRange range) = log_average 2 range
-> guess_coeff (Par True) xrange yrange 0 CoeffAny = 0
-> guess_coeff (Par False) xrange (ybtm, ytop) 0 CoeffAny = ytop
 
 > parseParabola = do
->     inv <- (reserved "inverted" >> return True) <|> return False
+>     t <- (reserved "inverted" >> return Inverted) <|> return Proper
 >     reserved "parabola"
->     return (Par inv)
+>     return (Par t)
 
-> par_sign (Par True)  = -1.0
-> par_sign (Par False) =  1.0
+> par_sign (Par Inverted)  = -1.0
+> par_sign (Par Proper) =  1.0
