@@ -150,11 +150,15 @@ function (\x -> f x).
 >           minimize NMSimplex2 1E-5 100 sbox cost_f coeff_init_guess
 >   in shout Long (show p)
 >      $ shout Short (name ++ ": Intersections " ++ show intersections)
->      $ shout Short (name ++ ": Minimize search box: " ++ show sbox)
+>      $ shout Short (name ++ ": Minimize search box: " ++ fmt sbox)
 >      $ shout Short (name ++ ": Constraint coeffs: " ++ show coeff_constraints)
->      $ shout Short (name ++ ": Guess coefficients " ++ show coeff_init_guess)
->      $ shout Short (name ++ ": Final coefficients " ++ show final_coeffs)
+>      $ shout Short (name ++ ": Guess coefficients " ++ fmt coeff_init_guess)
+>      $ shout Short (name ++ ": Final coefficients " ++ fmt final_coeffs)
 >      ((name, evalPoly (poly LE final_coeffs)), (final_coeffs, cost_functions))
+>   where
+>       -- Lower precision to fit the screen better.
+>       fmt :: [Double] -> String
+>       fmt = show . map (read . show :: Double -> Float)
 
 > plot_cost_functions name ((xl, xr), (yl, yr)) cfs =
 >   let
