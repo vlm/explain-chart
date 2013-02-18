@@ -73,6 +73,7 @@ to shorten the output.
 >                            n | n `rem` 1000 == 0 -> show (n `div` 1000)
 >                              | otherwise -> show $ fromIntegral n / 1000
 >   format (n, d) []         = show_x n d
+>   format (n, 0) rest       = rest
 >   format (n, d) ('-':rest) = show_x n d ++ " - " ++ rest
 >   format (n, d) rest       = show_x n d ++ " + " ++ rest
 >       
