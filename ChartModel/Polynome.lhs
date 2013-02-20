@@ -46,7 +46,7 @@
 >    center_x _ = center_in_top_right_quadrant
 >    center_y :: a -> (Double, Double) -> Double
 >    center_y _ = center_in_top_right_quadrant
->    coefficients :: a -> XRange -> YRange -> [Coefficient Double] -- Little-Endian, e.g. b+ax+cx^2
+>    coefficients :: a -> XRange -> YRange -> [Coefficient Double] -- Little-Endian, e.g. a+bx+cx^2
 >    coeff_initial_guess :: a -> XRange -> YRange -> [Double]
 >    search_box :: a -> XRange -> YRange -> [Double]
 >    search_box a xrange yrange =
