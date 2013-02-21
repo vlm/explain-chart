@@ -141,8 +141,9 @@ certain range of the "a" values (from the formula a x + b).
 
 Translate the polynomial coefficient back to the line slope:
 
-> line_slope_by_a xrange yrange a =
->   case 180 * (atan a) / pi of
+> line_slope_by_a (top_right_quadrant -> (xl,xr)) (top_right_quadrant -> (yl,yr)) a =
+>   let axes_ratio = (xr-xl) / (yr-yl) in
+>   case 180 * (atan (a * axes_ratio)) / pi of
 >     d | d >= 1 && d <= 1 -> Horizontal
 >       | d > 0 && d <= 35 -> SlightPositive
 >       | d > 0 && d <= 60 -> Positive
