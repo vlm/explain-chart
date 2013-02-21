@@ -38,9 +38,6 @@
 >   coeff_initial_guess (PolyWrap a) = coeff_initial_guess a
 >   search_box (PolyWrap a) = search_box a
 
-> type XRange = (Double, Double)
-> type YRange = (Double, Double)
-
 > class Polynomial a where
 >    center_x :: a -> (Double, Double) -> Double
 >    center_x _ = center_in_top_right_quadrant

@@ -1,6 +1,9 @@
 > {-# LANGUAGE ViewPatterns #-}
 > module ChartModel.Geometry where
 
+> type XRange = (Double, Double)
+> type YRange = (Double, Double)
+
 Compute average of two given values. Easy.
 
 > average (l, r) = l + (r - l) / 2
@@ -24,7 +27,7 @@ within these coordinates, yet in the positive range.
 
 Select only the intersections within a certain box
 
-> capbox :: (Double, Double) -> (Double, Double) -> [(Double, Double)] -> [(Double, Double)]
+> capbox :: XRange -> YRange -> [(Double, Double)] -> [(Double, Double)]
 > capbox (xl, xr) (yl, yr)
 >   | xl > xr   = capbox (xr, xl) (yl, yr)
 >   | yl > yr   = capbox (xl, xr) (yr, yl)

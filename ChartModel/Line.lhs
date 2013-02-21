@@ -49,16 +49,16 @@ We first say that we have 6 kinds of slopes, plus two horizontal (y = const)
 and vertical line kinds. This is about right to informally describe
 the usual assortment of lines used in the economic tutorials.
 
-> data LineKind = SteepPositive | Positive | SlightPositive
->               | SlightNegative | Negative | SteepNegative
->               | Horizontal
->               deriving (Show, Data, Typeable)
+> data LineSlope = SteepPositive | Positive | SlightPositive
+>                | SlightNegative | Negative | SteepNegative
+>                | Horizontal
+>                deriving (Eq, Show, Data, Typeable)
 
 A line is either an informal line described by its slope, or somewhat
 more formal line, described not only by its slope, but also by one
 or more of it special points — coordinates that we know lie on the line.
 
-> data Line = InformalLine LineKind
+> data Line = InformalLine LineSlope
 >           | ExactLine {
 >                       coeff_a :: Double,
 >                       coeff_b :: Double
@@ -90,14 +90,14 @@ Parse the line specification.
     "D = horizontal line"
 
 > parseLine = do
->     lineKind <- choice [
+>     lineSlope <- choice [
 >       do { reserved "line"; reserved "with";
->            kind <- parseLineKind; reserved "slope"; return kind },
+>            kind <- parseLineSlope; reserved "slope"; return kind },
 >       reserved "horizontal" >> reserved "line" >> return Horizontal
 >       ]
->     return (InformalLine lineKind)
+>     return (InformalLine lineSlope)
 
-> parseLineKind = choice [
+> parseLineSlope = choice [
 >     reserved "positive" >> return Positive,
 >     reserved "negative" >> return Negative,
 >     choice [reserved "slight", reserved "slightly"] >> choice [
@@ -125,18 +125,30 @@ adjust it by looking at axes range ratios.
 Each slope kind (except vertical) can be thought of as to correspond to a
 certain range of the "a" values (from the formula a x + b).
 
-> a_coeff_range_by :: LineKind -> (Double, Double)
+> a_coeff_range_by :: LineSlope -> (Double, Double)
 > a_coeff_range_by kind =
 >  let (min_angle, max_angle) = case kind of
 >       SlightPositive -> (10, 35)
->       Positive       -> (35, 55) 
->       SteepPositive  -> (55, 80)
->       SteepNegative  -> (-55, -80)
->       Negative       -> (-35, -55) 
+>       Positive       -> (35, 60) 
+>       SteepPositive  -> (60, 80)
+>       SteepNegative  -> (-60, -80)
+>       Negative       -> (-35, -60) 
 >       SlightNegative -> (-10, -35)
 >       Horizontal     -> (0.0, 0.0)
 >  in (a_of_angle min_angle, a_of_angle max_angle)
 >  where
 >       a_of_angle angle = tan (angle * pi / 180)
+
+Translate the polynomial coefficient back to the line slope:
+
+> line_slope_by_a xrange yrange a =
+>   case 180 * (atan a) / pi of
+>     d | d >= 1 && d <= 1 -> Horizontal
+>       | d > 0 && d <= 35 -> SlightPositive
+>       | d > 0 && d <= 60 -> Positive
+>       | d > 0 -> SteepPositive
+>       | d <= -60 -> SteepNegative
+>       | d <= -35 -> Negative
+>       | d < 0 -> SlightNegative
 
 
