@@ -21,3 +21,12 @@ When x-range or y-range is specified, find the center that lies
 within these coordinates, yet in the positive range.
 
 > center_in_top_right_quadrant (top_right_quadrant -> range) = average range
+
+Select only the intersections within a certain box
+
+> capbox :: (Double, Double) -> (Double, Double) -> [(Double, Double)] -> [(Double, Double)]
+> capbox (xl, xr) (yl, yr)
+>   | xl > xr   = capbox (xr, xl) (yl, yr)
+>   | yl > yr   = capbox (xl, xr) (yr, yl)
+>   | otherwise = filter (\(x, y) -> x >= xl && x <= xr && y >= yl && y <= yr)
+
