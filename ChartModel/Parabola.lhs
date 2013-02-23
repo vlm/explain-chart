@@ -1,6 +1,6 @@
 > {-# LANGUAGE DeriveDataTypeable, ViewPatterns #-}
 
-> module ChartModel.Parabola (Parabola, parseParabola) where
+> module ChartModel.Parabola (Parabola, ParType(..), parseParabola) where
 
 > import Data.Data
 > import ChartModel.SpecialPoint
@@ -9,7 +9,7 @@
 > import ChartModel.Geometry
 
 > data Parabola = Par ParType deriving (Show, Data, Typeable)
-> data ParType = Proper | Inverted deriving (Show, Data, Typeable)
+> data ParType = Proper | Inverted deriving (Show, Eq, Ord, Data, Typeable)
 
 
 > instance Polynomial Parabola where

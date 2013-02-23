@@ -9,7 +9,7 @@
 > import Data.Maybe
 > import Data.Monoid
 > import Data.Generics
-> import Control.Monad (when)
+> import Control.Monad (when, ap)
 
 The chart is described by some DSL. It is useful to visually
 check what that DSL describes. We employ Chart library to draw the graphs.
@@ -36,6 +36,7 @@ intersections, a desired center of the graph, and so on.
 > import ChartModel.Primitives
 > import ChartModel.Geometry
 > import ChartModel.Parser
+> import ChartModel.Explain
 
 > import qualified Debug.Trace
 
@@ -75,15 +76,15 @@ number of "-v" command line options are specified.
 
 Figure out the chart dimensions.
 
->   let (xmin, xmax, xaxis) = getAxis X chart
->   let (ymin, ymax, yaxis) = getAxis Y chart
+>   let (xrange, xaxis) = getAxis X chart
+>   let (yrange, yaxis) = getAxis Y chart
 
 Decide to plot 1000 points in each dimension unit.
 Define the y range limits appropriately, to make the chart at least as
 as tall as y-range.
 
->   let xcoords = [xmin, xmin + (xmax-xmin)/1000 .. (xmax - 0.1)]
->   let ylimits = [[ (LMin, LValue ymin), (LMin, LValue ymax) ]]
+>   let xcoords = [fst xrange, fst xrange + (snd xrange - fst xrange)/1000 .. (snd xrange - 0.1)]
+>   let ylimits = [[ (LMin, LValue $ fst yrange), (LMin, LValue $ snd yrange) ]]
 
 Convert intersections as DSL entities into the corresponding shapes' lists
 of their intersections.
@@ -91,28 +92,27 @@ of their intersections.
 >   let chart' = pushDownIntersections chart
 >   let shapes = collect chart'
 
->   let plot_of_shape shape =
->        let ((name, f), (final_coeffs, _)) = reify_shape shout (xmin,xmax) (ymin,ymax) shape in
->        plot_lines_values ^= [[ (x, f x) | x <- xcoords, f x < ymax, f x > ymin]]
+>   let plot_of_shape ((name, final_coeffs), (f, _)) =
+>        plot_lines_values ^= [capbox xrange yrange $ map (ap (,) f) xcoords]
 >        $ plot_lines_limit_values ^= ylimits
 >        $ plot_lines_title ^= lappend Short name (" " ++ showPolynome final_coeffs)
 >        $ defaultPlotLines
+>
+>   let reified_shapes = map (reify_shape shout xrange yrange) shapes
 > 
 >   whenFlag Debug $
->       mapM_ (\s ->
->           let ((name, f), (_, cfs)) = reify_shape shout (xmin,xmax) (ymin,ymax) s
->           in plot_cost_functions name ((-10, 10), (-10, 10)) cfs
->           ) shapes
+>       mapM_ (\((name, f), (_, cfs)) ->
+>           plot_cost_functions name ((-10, 10), (-10, 10)) cfs
+>           ) reified_shapes
 
 The chart file may include assertions for the coefficient ranges. Check
 them there and terminate program if they do not match. We use BangPattern
 here in order to flush out the trace messages and make sure the failure
 text comes at the very end of the output.
 
->   maybeErrs <- mapM (\s ->
->       let !((name, f), (final_coeffs, cfs)) = reify_shape shout (xmin,xmax) (ymin,ymax) s in
+>   maybeErrs <- mapM (\((name, final_coeffs), (f, cfs)) ->
 >       return $ check_coefficients name chart final_coeffs
->       ) shapes
+>       ) reified_shapes
 >   when (not $ null $ catMaybes maybeErrs) $ do
 >       hPutStrLn stderr (intercalate "\n" $ catMaybes maybeErrs)
 >       when (not $ needLog cliVerbosityLevel Short) $ exitWith (ExitFailure 2)
@@ -120,11 +120,11 @@ text comes at the very end of the output.
 
 >   let plots = zipWith (\c -> plot_lines_style .> line_color ^= opaque c)
 >                       (cycle colors)
->                       (map plot_of_shape shapes)
+>                       (map plot_of_shape reified_shapes)
 > 
 >   let hidden_range = PlotHidden {
->         plot_hidden_x_values_ = [xmin, xmax],
->         plot_hidden_y_values_ = [ymin, ymax]
+>         plot_hidden_x_values_ = [fst xrange, snd xrange],
+>         plot_hidden_y_values_ = [fst yrange, snd yrange]
 >       }
 >   let layout =
 >          layout1_bottom_axis .> laxis_override ^= axisTicksAtLabels . (if labeled xaxis then id else axisLabelsHide . axisTicksHide)
@@ -135,6 +135,9 @@ text comes at the very end of the output.
 >                             [Left (toPlot hidden_range)]
 >          $ layout1_title ^= lappend Short "" " (verbose output)"
 >          $ defaultLayout1
+> 
+>   putStrLn $ explain xrange yrange $ map fst reified_shapes
+> 
 >   flip mapM_ (collect chart :: [Filename]) $ \file -> do
 >       renderableToPDFFile (toRenderable layout) 500 500 (show file)
 >       putStrLn ("Image saved as " ++ show file)
@@ -162,7 +165,7 @@ function (\x -> f x).
 >      $ shout Short ("  Guess coefficients " ++ show coeff_init_guess)
 >      $ shout Short ("  Final coefficients " ++ show final_coeffs)
 >      $ shout Short ("  => " ++ showPolynome final_coeffs)
->      ((name, evalPoly (poly LE final_coeffs)), (final_coeffs, cost_functions))
+>      ((name, final_coeffs), (evalPoly (poly LE final_coeffs), cost_functions))
 
 > plot_cost_functions name ((xl, xr), (yl, yr)) cfs =
 >   let
@@ -197,13 +200,17 @@ function (\x -> f x).
 >   axis_ticks_ = if null al then [] else concatMap (\(x, _label) -> [(x, 5),(x, -5)]) $ head al
 >  }
 
+
+Extract the given kind of axis from the chart definition, or return the default.
+
+> getAxis :: AxisKind -> Chart -> ( (Double, Double), Axis )
 > getAxis kind chart =
 >   let axis_prop_guesses =
 >          map extract
 >          $ filter (\axis -> kind == axis_kind axis)
 >          $ collect chart
 >   in head (axis_prop_guesses ++ [extract $ defaultAxis kind])
->   where extract axis = (range_min axis, range_max axis, axis)
+>   where extract axis = ((range_min axis, range_max axis), axis)
 
 Produce a list of distinctive colors. The colors should not be too bright,
 so we limit the total brightness to 1.7 out of 3.

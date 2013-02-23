@@ -2,7 +2,7 @@
 
 Define primitive constituents of the typical chart: axes, shapes, labels.
 
-> module ChartModel.Primitives (Filename, ChartStmt(..),
+> module ChartModel.Primitives (Filename, Chart, ChartStmt(..),
 >                               parseChart, pushDownIntersections,
 >                               collect, collectMap, check_coefficients,
 >                               module ChartModel.Axis,
@@ -36,6 +36,8 @@ Primitive is a collection of all the labels, axes, shapes, etc.
 > newtype Filename = Filename String deriving (Data, Typeable)
 > instance Show Filename where
 >     show (Filename name) = name
+
+> type Chart = [ChartStmt]
 
 > data ChartStmt = MkAxis Axis
 >                | MkShape Shape

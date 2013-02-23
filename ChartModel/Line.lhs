@@ -49,10 +49,10 @@ We first say that we have 6 kinds of slopes, plus two horizontal (y = const)
 and vertical line kinds. This is about right to informally describe
 the usual assortment of lines used in the economic tutorials.
 
-> data LineSlope = SteepPositive | Positive | SlightPositive
->                | SlightNegative | Negative | SteepNegative
+> data LineSlope = SlightPositive | Positive | SteepPositive
+>                | SteepNegative | Negative | SlightNegative
 >                | Horizontal
->                deriving (Eq, Show, Data, Typeable)
+>                deriving (Eq, Ord, Show, Data, Typeable)
 
 A line is either an informal line described by its slope, or somewhat
 more formal line, described not only by its slope, but also by one
@@ -152,4 +152,15 @@ Translate the polynomial coefficient back to the line slope:
 >       | d <= -35 -> Negative
 >       | d < 0 -> SlightNegative
 
+
+> explain_line_slope n slope = case slope of
+>   SteepPositive   -> line ++ " with steep positive slope"
+>   SlightPositive  -> line ++ " with slight positive slope"
+>   SteepNegative   -> line ++ " with steep negative slope"
+>   SlightNegative  -> line ++ " with slight negative slope"
+>   Negative        -> line ++ " with negative slope"
+>   Positive        -> line ++ " with positive slope"
+>   Horizontal      -> "horizontal " ++ line
+>   where line | n == 1    = "line"
+>              | otherwise = "lines"
 
