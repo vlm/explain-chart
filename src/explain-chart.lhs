@@ -74,6 +74,15 @@ number of "-v" command line options are specified.
 >       lappend (needLog cliVerbosityLevel -> True)  x y = x `mappend` y
 >       lappend (needLog cliVerbosityLevel -> False) x y = x
 
+Check that the file contains no duplicate definitions.
+
+>   case sort (collectMap name chart) of
+>     [] -> fail "No shape definitions found"
+>     names -> case map fst $ filter (uncurry (==)) $ (ap zip tail) names of
+>               [] -> return ()
+>               dups -> fail $ "Duplicate definitions for shapes: "
+>                              ++ (intercalate ", "  dups)
+
 Figure out the chart dimensions.
 
 >   let (xrange, xaxis) = getAxis X chart
