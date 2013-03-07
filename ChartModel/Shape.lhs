@@ -5,6 +5,7 @@
 >                          Coefficient(..),
 >                          isPolyForm,
 >                          fromPolyForm,
+>                          fromShapeForm,
 >                          parseAnyShape,
 >                          module ChartModel.Polynome
 >                          ) where
@@ -23,7 +24,10 @@ as well as somewhat more complex expression combining the primitives.
 >               name :: String,
 >               shape :: ShapeForm,
 >               shape_intersections :: [SpecialPoint]
->              } deriving (Show, Data, Typeable)
+>              } deriving (Data, Typeable)
+> instance Show Shape where
+>   show (Shape n (PolyForm f) si) = n ++ " = " ++ show f
+>   show (Shape n (ExprForm f) si) = n ++ " = " ++ showExpression f
 > 
 > data ShapeForm = PolyForm PolyWrap | ExprForm Expression
 >                  deriving (Show, Data, Typeable)
@@ -32,6 +36,8 @@ as well as somewhat more complex expression combining the primitives.
 > isPolyForm (ExprForm _) = False
 > fromPolyForm (PolyForm pw) = pw
 > fromPolyForm (ExprForm _) = error "Unexpected ExpForm, giving up"
+> fromShapeForm (PolyForm _) = error "Unexpected ShapeForm, giving up"
+> fromShapeForm (ExprForm sf) = sf
 
 There are many kinds of shapes. We don't know how to parse neither of them.
 So we pick a list of all possible Polynome-compatible parsers and try them

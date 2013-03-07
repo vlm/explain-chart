@@ -33,3 +33,9 @@ Select only the intersections within a certain box
 >   | yl > yr   = capbox (xl, xr) (yr, yl)
 >   | otherwise = filter (\(x, y) -> x >= xl && x <= xr && y >= yl && y <= yr)
 
+
+> shortDouble :: Double -> String
+> shortDouble d | abs d < 0.001 = (show . (read :: String -> Float) . show) d
+>               | otherwise = case round (d * 1000) of
+>                               n | n `rem` 1000 == 0 -> show (n `div` 1000)
+>                                 | otherwise -> show $ fromIntegral n / 1000

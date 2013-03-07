@@ -90,7 +90,7 @@ Convert intersections as DSL entities into the corresponding shapes' lists
 of their intersections.
 
 >   let chart' = pushDownIntersections chart
->   let shapes = collectBut (not . isPolyForm) chart'
+>   let shapes = collectBut (not . isPolyForm) chart' :: [Shape]
 >   let reified_shapes = map (reify_shape shout xrange yrange) shapes
 
 >   let plot_of_shape ((name, final_coeffs), (f, _)) =
@@ -134,6 +134,9 @@ text comes at the very end of the output.
 >                             [Left (toPlot hidden_range)]
 >          $ layout1_title ^= lappend Short "" " (verbose output)"
 >          $ defaultLayout1
+> 
+>   whenFlag Verbose $
+>       mapM_ print (collectBut isPolyForm chart' :: [Shape])
 > 
 >   putStrLn $ explain xrange yrange $ map fst reified_shapes
 > 

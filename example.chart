@@ -21,6 +21,14 @@ Parabola = parabola
 InvParabola = inverted parabola
 
 /*
+ * This line represents a difference between Pos and Neg's
+ * values at any point x. Since it is likely to produce 0, we shift
+ * it up somewhat by adding half the y-axis range.
+ * Possible operations: +, -, *, /, ^
+ */
+Diff = Pos - Neg + 15
+
+/*
  * Say that these lines intersect at a particular point.
  */
 Pos and SteepPos and Parabola intersect at (5, 10)

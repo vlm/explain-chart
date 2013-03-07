@@ -61,14 +61,9 @@ to shorten the output.
 > showPolynome :: [Double] -> String
 > showPolynome = foldr format "" . reverse . zip [0..]
 >  where
->   show_x 0 d = short d
->   show_x 1 d = short d ++ "x"
->   show_x n d = short d ++ "x^" ++ show n
->   short :: Double -> String
->   short d | abs d < 0.001 = (show . (read :: String -> Float) . show) d
->           | otherwise = case round (d * 1000) of
->                            n | n `rem` 1000 == 0 -> show (n `div` 1000)
->                              | otherwise -> show $ fromIntegral n / 1000
+>   show_x 0 d = shortDouble d
+>   show_x 1 d = shortDouble d ++ "x"
+>   show_x n d = shortDouble d ++ "x^" ++ show n
 >   format (n, d) []         = show_x n d
 >   format (n, 0) rest       = rest
 >   format (n, d) ('-':rest) = show_x n d ++ " - " ++ rest

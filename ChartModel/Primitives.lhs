@@ -9,6 +9,7 @@ Define primitive constituents of the typical chart: axes, shapes, labels.
 >                               module ChartModel.Axis,
 >                               module ChartModel.Line,
 >                               module ChartModel.Parabola,
+>                               module ChartModel.Expression,
 >                               module ChartModel.Constraints,
 >                               module ChartModel.Shape,
 >                               module ChartModel.SpecialPoint,
