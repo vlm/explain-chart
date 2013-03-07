@@ -34,6 +34,10 @@ Select only the intersections within a certain box
 >   | otherwise = filter (\(x, y) -> x >= xl && x <= xr && y >= yl && y <= yr)
 
 
+Shorten the text representation of a floating point number. This may lose
+precision, but it is ok for most display purposes.
+For example, it'll turn 2.99998 into "3" and leave 2.998 as "2.998".
+
 > shortDouble :: Double -> String
 > shortDouble d | abs d < 0.001 = (show . (read :: String -> Float) . show) d
 >               | otherwise = case round (d * 1000) of
