@@ -40,7 +40,7 @@ as well as somewhat more complex expression combining the primitives.
 > fromShapeForm (ExprForm sf) = sf
 
 There are many kinds of shapes. We don't know how to parse neither of them.
-So we pick a list of all possible Polynome-compatible parsers and try them
+So we pick a list of all possible ShapeForm-compatible parsers and try them
 in turn, returning the complete Shape.
 
 > parseAnyShape primitive_shapes = do
