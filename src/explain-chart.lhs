@@ -90,15 +90,14 @@ Convert intersections as DSL entities into the corresponding shapes' lists
 of their intersections.
 
 >   let chart' = pushDownIntersections chart
->   let shapes = collect chart'
+>   let shapes = collectBut (not . isPolyForm) chart'
+>   let reified_shapes = map (reify_shape shout xrange yrange) shapes
 
 >   let plot_of_shape ((name, final_coeffs), (f, _)) =
 >        plot_lines_values ^= [capbox xrange yrange $ map (ap (,) f) xcoords]
 >        $ plot_lines_limit_values ^= ylimits
 >        $ plot_lines_title ^= lappend Short name (" " ++ showPolynome final_coeffs)
 >        $ defaultPlotLines
->
->   let reified_shapes = map (reify_shape shout xrange yrange) shapes
 > 
 >   whenFlag Debug $
 >       mapM_ (\((name, f), (_, cfs)) ->
@@ -148,13 +147,13 @@ function (\x -> f x).
 
 > reify_shape shout xrange yrange (Shape name shape intersections) =
 >   let
->       coeff_constraints = coefficients shape xrange yrange
->       coeff_init_guess = coeff_initial_guess shape xrange yrange
->       cx = center_x shape xrange
->       cy = center_y shape yrange
+>       coeff_constraints = (coefficients . fromPolyForm) shape xrange yrange
+>       coeff_init_guess = (coeff_initial_guess . fromPolyForm) shape xrange yrange
+>       cx = (center_x . fromPolyForm) shape xrange
+>       cy = (center_y . fromPolyForm) shape yrange
 >       (degree, cost_functions) = costFunction (cx, cy) coeff_constraints (map sp_xy intersections)
 >       cost_f cs = sum $ map (flip snd cs) cost_functions
->       sbox = search_box shape xrange yrange
+>       sbox = (search_box . fromPolyForm) shape xrange yrange
 >       !(final_coeffs, p) =
 >           minimize NMSimplex2 1E-5 100 sbox cost_f coeff_init_guess
 >   in shout Long (show p)

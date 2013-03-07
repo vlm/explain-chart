@@ -22,7 +22,6 @@ See also:
 > import Text.Parsec.Char
 > import Text.Parsec.Combinator
 > import Text.Parsec.String (Parser, parseFromFile) -- type Parser = Parsec String ()
-> import Text.Parsec.Expr
 > import Text.Parsec.Language (emptyDef)
 > import qualified Text.Parsec.Token as P
 > import Data.Char
@@ -38,7 +37,7 @@ Our language is based on C comments syntax.
 >       , P.identStart     = letter
 >       , P.identLetter    = alphaNum <|> oneOf "-_'"
 >       , P.reservedNames  = echart_keywords
->       , P.reservedOpNames= ["=", "..", ",", "±", "+-"]
+>       , P.reservedOpNames= ["=", "..", ",", "±", "+-", "+", "-", "*", "/", "^"]
 >       , P.caseSensitive  = True
 >       }
 

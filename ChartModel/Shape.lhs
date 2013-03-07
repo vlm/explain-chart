@@ -1,7 +1,10 @@
 > {-# LANGUAGE DeriveDataTypeable #-}
 
 > module ChartModel.Shape (Shape(..),
+>                          ShapeForm(..),
 >                          Coefficient(..),
+>                          isPolyForm,
+>                          fromPolyForm,
 >                          parseAnyShape,
 >                          module ChartModel.Polynome
 >                          ) where
@@ -10,16 +13,25 @@
 
 > import ChartModel.Parser
 > import ChartModel.Polynome
+> import ChartModel.Expression
 > import ChartModel.SpecialPoint
 
-Shape is a collection of regular drawing primitives: lines, curves, etc.
+Shape is a collection of regular drawing primitives: lines, curves, etc,
+as well as somewhat more complex expression combining the primitives.
 
 > data Shape = Shape {
 >               name :: String,
->               shape :: PolyWrap,
+>               shape :: ShapeForm,
 >               shape_intersections :: [SpecialPoint]
 >              } deriving (Show, Data, Typeable)
-
+> 
+> data ShapeForm = PolyForm PolyWrap | ExprForm Expression
+>                  deriving (Show, Data, Typeable)
+>
+> isPolyForm (PolyForm _) = True
+> isPolyForm (ExprForm _) = False
+> fromPolyForm (PolyForm pw) = pw
+> fromPolyForm (ExprForm _) = error "Unexpected ExpForm, giving up"
 
 There are many kinds of shapes. We don't know how to parse neither of them.
 So we pick a list of all possible Polynome-compatible parsers and try them

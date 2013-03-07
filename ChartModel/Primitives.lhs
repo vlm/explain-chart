@@ -4,7 +4,8 @@ Define primitive constituents of the typical chart: axes, shapes, labels.
 
 > module ChartModel.Primitives (Filename, Chart, ChartStmt(..),
 >                               parseChart, pushDownIntersections,
->                               collect, collectMap, check_coefficients,
+>                               collect, collectMap, collectBut,
+>                               check_coefficients,
 >                               module ChartModel.Axis,
 >                               module ChartModel.Line,
 >                               module ChartModel.Parabola,
@@ -25,6 +26,7 @@ Define primitive constituents of the typical chart: axes, shapes, labels.
 > import ChartModel.Line
 > import ChartModel.Parabola
 > import ChartModel.Polynome
+> import ChartModel.Expression
 > import ChartModel.Constraints
 > import ChartModel.Intersection
 > import ChartModel.SpecialPoint
@@ -46,7 +48,7 @@ Primitive is a collection of all the labels, axes, shapes, etc.
 >                | MkIntersection Intersection
 >                deriving (Show, Data, Typeable)
 > parseChartStatement =   fmap MkAxis parseAxis
->   <|> try (fmap MkShape (parseAnyShape ([fmap PolyWrap parseLine, fmap PolyWrap parseParabola])))
+>   <|> try (fmap MkShape (parseAnyShape ([fmap (PolyForm . PolyWrap) parseLine, fmap (PolyForm . PolyWrap) parseParabola, fmap ExprForm parseExpression])))
 >   <|> try (fmap MkSave (fmap Filename $ reserved "save" >> stringLiteral))
 >   <|> try (fmap MkCoeffCheck parseCoeffCheck)
 >   <|> try (fmap MkIntersection parseIntersection)
@@ -141,4 +143,4 @@ Example
 >                                   Just a -> [f a]
 >                                   Nothing -> []
 >                           )
-
+> collectBut q = concat . (collectMap (\x -> if null $ listify q x then [x] else []))
