@@ -40,6 +40,9 @@ In our DSL, a line can be introduced via description like
 > module ChartModel.Line where
 
 > import Data.Data
+> import Control.Monad
+> import Test.QuickCheck hiding (Positive)
+
 > import ChartModel.SpecialPoint
 > import ChartModel.Parser
 > import ChartModel.Polynome
@@ -64,7 +67,6 @@ or more of it special points — coordinates that we know lie on the line.
 >                       coeff_b :: Double
 >                       }
 >           deriving (Show, Data, Typeable)
-
 
 An exact line is certainly an instance of polynome. Reflect it here.
 
@@ -163,4 +165,9 @@ Translate the polynomial coefficient back to the line slope:
 >   Horizontal      -> "horizontal " ++ line
 >   where line | n == 1    = "line"
 >              | otherwise = "lines"
+
+Make random kinds of lines, for QuickCheck.
+
+> instance Arbitrary Line where
+>   arbitrary = oneof [liftM2 ExactLine arbitrary arbitrary]
 

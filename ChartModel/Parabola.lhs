@@ -1,8 +1,10 @@
 > {-# LANGUAGE DeriveDataTypeable, ViewPatterns #-}
 
 > module ChartModel.Parabola (Parabola, ParType(..), parseParabola) where
-
+>
 > import Data.Data
+> import Test.QuickCheck
+> 
 > import ChartModel.SpecialPoint
 > import ChartModel.Parser
 > import ChartModel.Polynome
@@ -45,4 +47,9 @@ or
 >     t <- (reserved "inverted" >> return Inverted) <|> return Proper
 >     reserved "parabola"
 >     return (Par t)
+
+Make random kinds of parabolas, for QuickCheck.
+
+> instance Arbitrary Parabola where
+>   arbitrary = elements [Par Proper, Par Inverted]
 

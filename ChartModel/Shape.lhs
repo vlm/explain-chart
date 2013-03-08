@@ -3,10 +3,9 @@
 > module ChartModel.Shape (Shape(..),
 >                          ShapeForm(..),
 >                          Shapeoid(..),
->                          Coefficient(..),
 >                          isPolyForm,
 >                          fromPolyForm,
->                          fromShapeForm,
+>                          fromDerivedForm,
 >                          parseAnyShape,
 >                          module ChartModel.Polynome
 >                          ) where
@@ -28,18 +27,18 @@ as well as somewhat more complex expression combining the primitives.
 >               shape_intersections :: [SpecialPoint]
 >              } deriving (Data, Typeable)
 > instance Show Shape where
->   show (Shape n (PolyForm f) si) = n ++ " = " ++ show f
->   show (Shape n (ExprForm f) si) = n ++ " = " ++ showExpression f
+>   show (Shape n (PolyForm    f) si) = n ++ " = " ++ show f
+>   show (Shape n (DerivedForm f) si) = n ++ " = " ++ showExpression f
 > 
-> data ShapeForm = PolyForm PolyWrap | ExprForm Expression
+> data ShapeForm = PolyForm PolyWrap | DerivedForm Expression
 >                  deriving (Show, Data, Typeable)
 >
 > isPolyForm (PolyForm _) = True
-> isPolyForm (ExprForm _) = False
+> isPolyForm (DerivedForm _) = False
 > fromPolyForm (PolyForm pw) = pw
-> fromPolyForm (ExprForm _) = error "Unexpected ExpForm, giving up"
-> fromShapeForm (PolyForm _) = error "Unexpected ShapeForm, giving up"
-> fromShapeForm (ExprForm sf) = sf
+> fromPolyForm (DerivedForm _) = error "Unexpected derived form, giving up"
+> fromDerivedForm (PolyForm _) = error "Unexpected polynomial form, giving up"
+> fromDerivedForm (DerivedForm sf) = sf
 
 > class Shapeoid a where
 >    center_x :: a -> (Double, Double) -> Double

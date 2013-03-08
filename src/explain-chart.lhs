@@ -9,6 +9,7 @@
 > import Data.Maybe
 > import Data.Monoid
 > import Data.Generics
+> import Test.QuickCheck hiding (collect)
 > import Control.Monad (when, ap)
 
 The chart is described by some DSL. It is useful to visually

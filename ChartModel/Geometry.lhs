@@ -1,12 +1,37 @@
-> {-# LANGUAGE ViewPatterns #-}
+> {-# LANGUAGE DeriveDataTypeable, ViewPatterns #-}
 > module ChartModel.Geometry where
+> import Data.Data
+
+In many places we use uncertain ranges for polynomial coefficients.
+The Coefficient type represents what we know about the range.
+
+The interesting part is coefficient variability profile. It is used
+when we need to compute a "middle of the range". See a description for
+the log_average function for details, below.
+
+> data Variability = Linear | NonLinear deriving (Eq, Show, Data, Typeable)
+> data Coefficient a = CoeffExact a | CoeffRange Variability (a, a) | CoeffAny
+>                      deriving (Eq, Show, Data, Typeable)
+
+Normalization is making sure range has left and right values in increasing order.
+
+> normalizeCoefficient (CoeffRange v (l, r)) | l > r = CoeffRange v (r, l)
+> normalizeCoefficient c = c
+
+Make some handy type aliases to represent axis value ranges.
 
 > type XRange = (Double, Double)
 > type YRange = (Double, Double)
 
-Compute average of two given values. Easy.
+Compute a simple linear average of two given values. Easy!
 
 > average (l, r) = l + (r - l) / 2
+
+If we do a simple math average, it won't work well for ranges like [0.1..10]
+for the higher degree terms (i.e., x^2). A simple math would give us 5.05, which
+is not pretty. Therefore, we need to be able to compute an "average" of
+such kinds of ranges by taking in account relative magnitudes. In [0.1..10]
+case, the log_average will yield ~1.0.
 
 > log_average (l, r)
 >   | l > 0 && r > 0 = exp (log l + (log r - log l) / 2)
@@ -43,3 +68,4 @@ For example, it'll turn 2.99998 into "3" and leave 2.998 as "2.998".
 >               | otherwise = case round (d * 1000) of
 >                               n | n `rem` 1000 == 0 -> show (n `div` 1000)
 >                                 | otherwise -> show $ fromIntegral n / 1000
+

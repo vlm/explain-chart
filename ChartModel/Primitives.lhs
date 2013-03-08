@@ -49,7 +49,11 @@ Primitive is a collection of all the labels, axes, shapes, etc.
 >                | MkIntersection Intersection
 >                deriving (Show, Data, Typeable)
 > parseChartStatement =   fmap MkAxis parseAxis
->   <|> try (fmap MkShape (parseAnyShape ([fmap (PolyForm . PolyWrap) parseLine, fmap (PolyForm . PolyWrap) parseParabola, fmap ExprForm parseExpression])))
+>   <|> try (fmap MkShape (parseAnyShape ([
+>                               fmap (PolyForm . PolyWrap) parseLine,
+>                               fmap (PolyForm . PolyWrap) parseParabola,
+>                               fmap DerivedForm parseExpression
+>                          ])))
 >   <|> try (fmap MkSave (fmap Filename $ reserved "save" >> stringLiteral))
 >   <|> try (fmap MkCoeffCheck parseCoeffCheck)
 >   <|> try (fmap MkIntersection parseIntersection)
