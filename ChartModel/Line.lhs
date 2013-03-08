@@ -72,7 +72,11 @@ An exact line is certainly an instance of polynome. Reflect it here.
 
 > instance Polynomial Line where
 >   coefficients (ExactLine a b) _ _ = [CoeffExact b, CoeffExact a]
->   coefficients (InformalLine k) xrange yrange = [CoeffAny,
+>   coefficients (InformalLine Horizontal) xrange yrange = [
+>       CoeffRange Linear yrange,
+>       CoeffRange Linear (a_coeff_range_by Horizontal)]
+>   coefficients (InformalLine k) xrange yrange = [
+>       CoeffAny,
 >       CoeffRange Linear (adjust_aspect_ratio xrange yrange $ a_coeff_range_by k)]
 >   coeff_initial_guess a xrange yrange =
 >       map (guess_coeff xrange yrange) (coefficients a xrange yrange)

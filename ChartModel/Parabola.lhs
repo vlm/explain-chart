@@ -1,6 +1,6 @@
 > {-# LANGUAGE DeriveDataTypeable, ViewPatterns #-}
 
-> module ChartModel.Parabola (Parabola, ParType(..), parseParabola) where
+> module ChartModel.Parabola (Parabola(..), ParType(..), parseParabola) where
 >
 > import Data.Data
 > import Test.QuickCheck
@@ -14,7 +14,7 @@
 Parabola can be of two general types: a proper parabola (ends up), and
 an inverted parabola (ends down).
 
-> data Parabola = Par ParType deriving (Show, Data, Typeable)
+> data Parabola = Parabola ParType deriving (Show, Data, Typeable)
 > data ParType = Proper | Inverted deriving (Show, Eq, Ord, Data, Typeable)
 
 Parabola with its formula (a + bx + cx^2) is an obvious instance
@@ -27,13 +27,13 @@ of a polynomial.
 >       CoeffRange NonLinear (0.001 * par_sign p, 1 * par_sign p)
 >    ]
 >       where
->           par_sign (Par Inverted)  = -1.0
->           par_sign (Par Proper) =  1.0
+>           par_sign (Parabola Inverted)  = -1.0
+>           par_sign (Parabola Proper) =  1.0
 >   coeff_initial_guess p xrange yrange =
 >       zipWith (guess_coeff p xrange yrange) [0..] (coefficients p xrange yrange)
 
-> guess_coeff (Par Inverted) xrange yrange 0 CoeffAny = 0
-> guess_coeff (Par Proper) xrange (ybtm, ytop) 0 CoeffAny = ytop
+> guess_coeff (Parabola Inverted) xrange yrange 0 CoeffAny = 0
+> guess_coeff (Parabola Proper) xrange (ybtm, ytop) 0 CoeffAny = ytop
 > guess_coeff p xrange yrange _ (CoeffRange Linear range) = average range
 > guess_coeff p xrange yrange _ (CoeffRange NonLinear range) = log_average range
 > guess_coeff p xrange yrange _ (CoeffExact c) = c
@@ -46,10 +46,10 @@ or
 > parseParabola = do
 >     t <- (reserved "inverted" >> return Inverted) <|> return Proper
 >     reserved "parabola"
->     return (Par t)
+>     return (Parabola t)
 
 Make random kinds of parabolas, for QuickCheck.
 
 > instance Arbitrary Parabola where
->   arbitrary = elements [Par Proper, Par Inverted]
+>   arbitrary = elements [Parabola Proper, Parabola Inverted]
 
