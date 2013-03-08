@@ -22,11 +22,6 @@ check what that DSL describes. We employ Chart library to draw the graphs.
 > import Data.Colour
 > import Data.Colour.SRGB.Linear
 
-A different way to plot, useful for 3D debugging.
-
-> import Graphics.Plot
-> import Data.Packed.Matrix
-
 We use numeric minimization to compute the optimal shape of the graph,
 given various constraints. Constraints may include a list of proposed
 intersections, a desired center of the graph, and so on.
@@ -41,11 +36,10 @@ intersections, a desired center of the graph, and so on.
 
 > import qualified Debug.Trace
 
-> data Flag = Verbose | Debug deriving Eq
+> data Flag = Verbose deriving Eq
 > cliOptions :: [OptDescr Flag]
 > cliOptions = [
->   Option ['v'] ["verbose"] (NoArg Verbose) "dump more debugging info (also -vv)",
->   Option ['d'] ["debug"]   (NoArg Debug) "produce useless debug.pdf"
+>   Option ['v'] ["verbose"] (NoArg Verbose) "dump more debugging info (also -vv)"
 >  ]
 
 > main = do
@@ -100,19 +94,14 @@ Convert intersections as DSL entities into the corresponding shapes' lists
 of their intersections.
 
 >   let chart' = pushDownIntersections chart
->   let shapes = collectBut (not . isPolyForm) chart' :: [Shape]
->   let reified_shapes = map (reify_shape shout xrange yrange) shapes
+>   let all_shapes = upgradeToPolyForm xrange yrange $ collect chart' :: [Shape]
+>   let reified_shapes = map (reify_shape shout xrange yrange) all_shapes
 
 >   let plot_of_shape ((name, final_coeffs), (f, _)) =
 >        plot_lines_values ^= [capbox xrange yrange $ map (ap (,) f) xcoords]
 >        $ plot_lines_limit_values ^= ylimits
 >        $ plot_lines_title ^= lappend Short name (" " ++ showPolynome final_coeffs)
 >        $ defaultPlotLines
-> 
->   whenFlag Debug $
->       mapM_ (\((name, f), (_, cfs)) ->
->           plot_cost_functions name ((-10, 10), (-10, 10)) cfs
->           ) reified_shapes
 
 The chart file may include assertions for the coefficient ranges. Check
 them there and terminate program if they do not match. We use BangPattern
@@ -144,9 +133,6 @@ text comes at the very end of the output.
 >                             [Left (toPlot hidden_range)]
 >          $ layout1_title ^= lappend Short "" " (verbose output)"
 >          $ defaultLayout1
-> 
->   whenFlag Verbose $
->       mapM_ print (collectBut isPolyForm chart' :: [Shape])
 > 
 >   putStrLn $ explain xrange yrange $ map fst reified_shapes
 > 

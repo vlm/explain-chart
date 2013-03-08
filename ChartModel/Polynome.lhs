@@ -53,7 +53,7 @@ by the Polynomial typeclass. Therefore, we use a PolyWrap function to
 encapsulate any Polynomial-compatible structure behind it and hide its
 true structure.
 
-> data PolyWrap = forall a. (Polynomial a, Arbitrary a, Show a, Data a, Typeable a) => PolyWrap a deriving Typeable
+> data PolyWrap = forall a. (Polynomial a, Show a, Data a, Typeable a) => PolyWrap a deriving Typeable
 > instance Show PolyWrap where
 >   show (PolyWrap a) =
 >       "PolyWrap { " ++ show a ++ " }"

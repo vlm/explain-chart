@@ -1,0 +1,13 @@
+
+save "test5.pdf"
+
+x-axis range 0..10 labeled
+y-axis range 0..10 labeled
+
+Parabola = parabola
+
+Parabola goes through (2, 8) and (8, 8)
+
+Shifted = Parabola + 3
+
+check Parabola coefficients [22.0 ± 5, -8 ± 2, 0.7 ± 0.2]

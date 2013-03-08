@@ -3,7 +3,7 @@
 > module ChartModel.Expression (Expression(..),
 >                               NamedPolynomial(..),
 >                               showExpression,
->                               listifyWholeLists,
+>                               exprDependencies,
 >                               polyFromExpression,
 >                               parseExpression,
 >                               prop_polyDegreeMatches,
@@ -207,4 +207,7 @@ Adapted http://www.haskell.org/haskellwiki/Scrap_your_boilerplate
 
 > listifyWholeLists :: Typeable b => GenericQ [[b]]
 > listifyWholeLists = flip (synthesize id (.) (mkQ id (\bl _ -> (bl:)))) []
+
+> exprDependencies :: Expression -> [String]
+> exprDependencies = listifyWholeLists
 

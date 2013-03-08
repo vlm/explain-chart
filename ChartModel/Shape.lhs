@@ -7,10 +7,13 @@
 >                          fromPolyForm,
 >                          fromDerivedForm,
 >                          parseAnyShape,
+>                          upgradeToPolyForm,
 >                          module ChartModel.Polynome
 >                          ) where
 
 > import Data.Data
+> import Data.List
+> import Data.Graph
 
 > import ChartModel.Parser
 > import ChartModel.Polynome
@@ -58,3 +61,41 @@ in turn, returning the complete Shape.
 >   reservedOp "="
 >   prim <- choice primitive_shapes
 >   return (Shape name prim [])
+
+Topologically sort shapes so the shapes found earlier in the list
+depend only on the following shapes.
+
+> topSortShapes :: [Shape] -> [Shape]
+> topSortShapes shapes =
+>   let
+>       -- Figuring out strongly connected components allow detecting
+>       -- circular dependencies.
+>       scc = stronglyConnComp (map toGraph shapes)
+>       (graph, v2triple, k2v) = graphFromEdges (map toGraph shapes)
+>       shape_of_vertex = (\(s, _, _) -> s) . v2triple
+>   in case flattenSCCs (filter cyclic scc) of
+>       -- Shapes in the head depend only on the next shapes in the list.
+>       [] -> map shape_of_vertex (topSort graph)
+>       shapes -> error $ "Circular dependency between "
+>                      ++ intercalate " and " (map (show . name) shapes)
+>   where
+>       toGraph shape@(Shape { shape = PolyForm _ }) = (shape, name shape, [])
+>       toGraph shape@(Shape { shape = DerivedForm expr }) =
+>                   (shape, name shape, exprDependencies expr)
+>       cyclic (AcyclicSCC _) = False
+>       cyclic (CyclicSCC _) = True
+
+When we are given the full list of shapes, we can promote the derived
+shape (given as expression) to conform to a Polynomial type class.
+
+> upgradeToPolyForm :: XRange -> YRange -> [Shape] -> [Shape]
+> upgradeToPolyForm xrange yrange shapes =
+>   reverse $ map snd $ foldr (\s acc ->
+>       case shape s of
+>           PolyForm p -> ((name s, p), s) : acc
+>           DerivedForm expr ->
+>               let polyExpr = PolyWrap (polyFromExpression
+>                                        (map fst acc) xrange yrange expr) in
+>               ((name s, polyExpr), s { shape = PolyForm polyExpr }) : acc
+>       ) [] (topSortShapes shapes)
+
