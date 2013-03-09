@@ -150,7 +150,7 @@ function (\x -> f x).
 >       coeff_init_guess = (coeff_initial_guess . fromPolyForm) shape xrange yrange
 >       cx = center_x shape xrange
 >       cy = center_y shape yrange
->       (degree, cost_functions) = costFunction (cx, cy) coeff_constraints (map sp_xy intersections)
+>       cost_functions = polyCostFunction (cx, cy) coeff_constraints (map sp_xy intersections)
 >       cost_f cs = sum $ map (flip snd cs) cost_functions
 >       sbox = (search_box . fromPolyForm) shape xrange yrange
 >       !(final_coeffs, p) =

@@ -7,16 +7,22 @@
 >                          fromPolyForm,
 >                          fromDerivedForm,
 >                          parseAnyShape,
+>                          topSortShapes,
 >                          upgradeToPolyForm,
->                          module ChartModel.Polynome
+>                          module ChartModel.Polynome,
+>                          module ChartModel.SpecialPoint
 >                          ) where
 
 > import Data.Data
 > import Data.List
 > import Data.Graph
+> import Test.QuickCheck
+> import Control.Monad
 
 > import ChartModel.Parser
 > import ChartModel.Polynome
+> import ChartModel.Line
+> import ChartModel.Parabola
 > import ChartModel.Expression
 > import ChartModel.SpecialPoint
 > import ChartModel.Geometry
@@ -61,6 +67,21 @@ in turn, returning the complete Shape.
 >   reservedOp "="
 >   prim <- choice primitive_shapes
 >   return (Shape name prim [])
+
+
+> instance Arbitrary Shape where
+>   arbitrary = oneof [
+>       liftM3 Shape (elements ["A", "B", "C"])
+>                    (fmap DerivedForm arbitrary)
+>                    (return []),
+>       liftM3 Shape (elements ["Poly1", "Poly2"])
+>                    (fmap (PolyForm . PolyWrap) (arbitrary :: Gen Line))
+>                    (return []),
+>       liftM3 Shape (elements ["Poly1", "Poly2"])
+>                    (fmap (PolyForm . PolyWrap) (arbitrary :: Gen Parabola))
+>                    (return [])
+>       ]
+
 
 Topologically sort shapes so the shapes found earlier in the list
 depend only on the following shapes.
