@@ -134,12 +134,12 @@ certain range of the "a" values (from the formula a x + b).
 > a_coeff_range_by :: LineSlope -> (Double, Double)
 > a_coeff_range_by kind =
 >  let (min_angle, max_angle) = case kind of
->       SlightPositive -> (10, 35)
->       Positive       -> (35, 60) 
+>       SlightPositive -> (10, 25)
+>       Positive       -> (25, 60) 
 >       SteepPositive  -> (60, 80)
 >       SteepNegative  -> (-60, -80)
->       Negative       -> (-35, -60) 
->       SlightNegative -> (-10, -35)
+>       Negative       -> (-25, -60) 
+>       SlightNegative -> (-10, -25)
 >       Horizontal     -> (0.0, 0.0)
 >  in (a_of_angle min_angle, a_of_angle max_angle)
 >  where
@@ -151,11 +151,11 @@ Translate the polynomial coefficient back to the line slope:
 >   let axes_ratio = (xr-xl) / (yr-yl) in
 >   case 180 * (atan (a * axes_ratio)) / pi of
 >     d | d >= 1 && d <= 1 -> Horizontal
->       | d > 0 && d <= 35 -> SlightPositive
+>       | d > 0 && d <= 25 -> SlightPositive
 >       | d > 0 && d <= 60 -> Positive
 >       | d > 0 -> SteepPositive
 >       | d <= -60 -> SteepNegative
->       | d <= -35 -> Negative
+>       | d <= -25 -> Negative
 >       | d < 0 -> SlightNegative
 
 
