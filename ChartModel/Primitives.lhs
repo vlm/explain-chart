@@ -2,7 +2,8 @@
 
 Define primitive constituents of the typical chart: axes, shapes, labels.
 
-> module ChartModel.Primitives (Filename, Chart, ChartStmt(..),
+> module ChartModel.Primitives (Chart, ChartStmt(..),
+>                               Filename, ShapeShow(..), ShapeHide(..),
 >                               parseChart, pushDownIntersections,
 >                               collect, collectMap, collectBut,
 >                               check_coefficients,
@@ -40,11 +41,22 @@ Primitive is a collection of all the labels, axes, shapes, etc.
 > instance Show Filename where
 >     show (Filename name) = name
 
+We can elect to display only a certain shapes, hiding all other,
+or hide some shapes selectively:
+
+    show A, B, C
+    hide B, E
+
+> newtype ShapeShow = SShow { sshow:: [String] } deriving (Show, Data, Typeable)
+> newtype ShapeHide = SHide { shide:: [String] } deriving (Show, Data, Typeable)
+
 > type Chart = [ChartStmt]
 
 > data ChartStmt = MkAxis Axis
 >                | MkShape Shape
->                | MkSave Filename
+>                | MkSave Filename  -- save "abc.pdf"
+>                | MkShow ShapeShow -- show A, B, C
+>                | MkHide ShapeHide -- hide B, E
 >                | MkCoeffCheck CoeffCheck
 >                | MkIntersection Intersection
 >                deriving (Show, Data, Typeable)
@@ -54,7 +66,9 @@ Primitive is a collection of all the labels, axes, shapes, etc.
 >                               fmap (PolyForm . PolyWrap) parseParabola,
 >                               fmap DerivedForm parseExpression
 >                          ])))
->   <|> try (fmap MkSave (fmap Filename $ reserved "save" >> stringLiteral))
+>   <|> try (fmap (MkSave . Filename) $ reserved "save" >> stringLiteral)
+>   <|> try (fmap (MkShow . SShow) $ reserved "show" >> commaSep1 idOrString)
+>   <|> try (fmap (MkHide . SHide) $ reserved "hide" >> commaSep1 idOrString)
 >   <|> try (fmap MkCoeffCheck parseCoeffCheck)
 >   <|> try (fmap MkIntersection parseIntersection)
 

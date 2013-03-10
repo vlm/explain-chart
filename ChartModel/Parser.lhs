@@ -8,6 +8,7 @@ See also:
     http://book.realworldhaskell.org/read/using-parsec.html
 
 > module ChartModel.Parser (run, whiteSpace, identifier,
+>                           idOrString,
 >                           integer, natural, naturalOrFloat, signedNaturalOrFloat,
 >                           reserved, reservedOp, comma, commaSep1,
 >                           parens, brackets, stringLiteral,
@@ -49,6 +50,7 @@ Our language is based on C comments syntax.
 >                    "intersect", "at", "and",
 >                    "goes", "through",
 >                    "unlabeled", "labeled",
+>                    "show", "hide",
 >                    "check", "coefficients"]
 
 > lexer :: P.TokenParser ()
@@ -79,10 +81,11 @@ Our language is based on C comments syntax.
 > brackets   = P.brackets lexer
 > operator   = P.operator lexer
 > semi       = P.semi lexer
-> identifier = P.identifier lexer
 > reserved   = P.reserved lexer
 > reservedOp = P.reservedOp lexer
+> identifier = P.identifier lexer
 > stringLiteral = P.stringLiteral lexer
+> idOrString = identifier <|> stringLiteral
  
 > run :: Show a => Parser a -> String -> IO ()
 > run p input =

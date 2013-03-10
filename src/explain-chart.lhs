@@ -94,10 +94,27 @@ Convert intersections as DSL entities into the corresponding shapes' lists
 of their intersections.
 
 >   let chart' = pushDownIntersections chart
->   let all_shapes = upgradeToPolyForm xrange yrange $ collect chart' :: [Shape]
->   let reified_shapes = map (reify_shape shout xrange yrange) all_shapes
+>   let all_shapes = collect chart' :: [Shape]
+>   let all_reified_shapes = reify_shapes shout xrange yrange all_shapes
 
->   let plot_of_shape ((name, final_coeffs), (f, _)) =
+A function to allow us to filter against a non-empty list of elements.
+If we don't have a list (that is, a list is empty), we don't filter.
+
+>   let maybeFilter unwrap values f list = case values of
+>           [] -> list
+>           vs -> filter (\(unwrap -> e) -> f (e `elem` vs)) list
+
+That function is used to filter against "show A, B" and "hide C, D" clauses
+which allow control over what gets displayed on the graph.
+
+>   let show_shapes = concatMap sshow (collect chart' :: [ShapeShow])
+>   let hide_shapes = concatMap shide (collect chart' :: [ShapeHide])
+>   let reified_shapes =
+>           let name = fst . fst
+>           in maybeFilter name hide_shapes not
+>            $ maybeFilter name show_shapes id all_reified_shapes
+
+>   let plot_of_shape ((name, final_coeffs), f) =
 >        plot_lines_values ^= [capbox xrange yrange $ map (ap (,) f) xcoords]
 >        $ plot_lines_limit_values ^= ylimits
 >        $ plot_lines_title ^= lappend Short name (" " ++ showPolynome final_coeffs)
@@ -108,7 +125,7 @@ them there and terminate program if they do not match. We use BangPattern
 here in order to flush out the trace messages and make sure the failure
 text comes at the very end of the output.
 
->   maybeErrs <- mapM (\((name, final_coeffs), (f, cfs)) ->
+>   maybeErrs <- mapM (\((name, final_coeffs), f) ->
 >       return $ check_coefficients name chart final_coeffs
 >       ) reified_shapes
 >   when (not $ null $ catMaybes maybeErrs) $ do
@@ -140,11 +157,36 @@ text comes at the very end of the output.
 >       renderableToPDFFile (toRenderable layout) 500 500 (show file)
 >       putStrLn ("Image saved as " ++ show file)
 
-Concretize vague shape coefficients by optimizing for intersections,
-shape center, and other constraints. Returns a name and the evaluation
-function (\x -> f x).
+Concretize vague shape coefficients by globally optimizing for intersections,
+shape center, and other constraints.
 
-> reify_shape shout xrange yrange (Shape name shape intersections) =
+> reify_shapes shout xrange yrange all_shapes =
+>   let (numcs, shapes_and_positions, costFunction, name2eval) =
+>           combinedShapesCost xrange yrange all_shapes
+>       cost_f = sum . map snd . costFunction
+>       polyForms = map (fromPolyForm . shape) $ filter (isPolyForm . shape) all_shapes
+>       coeff_constraints = concatMap (\p -> coefficients p xrange yrange) polyForms
+>       coeff_init_guess = concatMap (\p -> coeff_initial_guess p xrange yrange) polyForms
+>       sbox = concatMap (\p -> search_box p xrange yrange) polyForms
+>       !(final_coeffs, p) =
+>           minimize NMSimplex2 1E-5 1000 sbox cost_f coeff_init_guess
+>   in Debug.Trace.trace ("Positions: " ++ (show $ coefficientPositions all_shapes)) $ map (\(s, span) ->
+>       let n = name s
+>           cs = select span final_coeffs
+>           !_ = shape_costf xrange yrange s
+>       in shout Short ("NEW " ++ n ++ ":" ++ show span)
+>          $ shout Short ("  N Intersections " ++ show (shape_intersections s))
+>          $ shout Short ("  N Minimize search box: " ++ show (select span sbox))
+>          $ shout Short ("  N Constraint coeffs: " ++ show (select span coeff_constraints))
+>          $ shout Short ("  N Guess coefficients " ++ show (select span coeff_init_guess))
+>          $ shout Short ("  N Final coefficients " ++ show cs)
+>          ((n, cs), name2eval final_coeffs n)
+>   ) shapes_and_positions
+>   where select (start, span) = reverse . take span . drop start . reverse
+
+
+> shape_costf xrange yrange (Shape name shape@(DerivedForm _) intersections) = []
+> shape_costf xrange yrange (Shape name shape@(PolyForm _) intersections) =
 >   let
 >       coeff_constraints = (coefficients . fromPolyForm) shape xrange yrange
 >       coeff_init_guess = (coeff_initial_guess . fromPolyForm) shape xrange yrange
@@ -155,15 +197,14 @@ function (\x -> f x).
 >       sbox = (search_box . fromPolyForm) shape xrange yrange
 >       !(final_coeffs, p) =
 >           minimize NMSimplex2 1E-5 100 sbox cost_f coeff_init_guess
->   in shout Long (show p)
->      $ shout Short (name ++ ":")
->      $ shout Short ("  Intersections " ++ show intersections)
->      $ shout Short ("  Minimize search box: " ++ show sbox)
->      $ shout Short ("  Constraint coeffs: " ++ show coeff_constraints)
->      $ shout Short ("  Guess coefficients " ++ show coeff_init_guess)
->      $ shout Short ("  Final coefficients " ++ show final_coeffs)
->      $ shout Short ("  => " ++ showPolynome final_coeffs)
->      ((name, final_coeffs), (evalPoly (poly LE final_coeffs), cost_functions))
+>   in Debug.Trace.trace ("OLD " ++ name ++ ":")
+>      $ Debug.Trace.trace ("  O Intersections " ++ show intersections)
+>      $ Debug.Trace.trace ("  O Minimize search box: " ++ show sbox)
+>      $ Debug.Trace.trace ("  O Constraint coeffs: " ++ show coeff_constraints)
+>      $ Debug.Trace.trace ("  O Guess coefficients " ++ show coeff_init_guess)
+>      $ Debug.Trace.trace ("  O Final coefficients " ++ show final_coeffs)
+>      final_coeffs
+
 
 > plot_cost_functions name ((xl, xr), (yl, yr)) cfs =
 >   let

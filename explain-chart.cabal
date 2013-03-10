@@ -75,8 +75,8 @@ executable explain-chart
                        syb ==0.3.*,
                        Chart ==0.16.*,
                        transformers ==0.3.*,
+                       containers ==0.4.*,
                        colour ==2.3.*,
                        data-accessor ==0.2.2.*,
-                       derive ==2.5.*,
                        QuickCheck ==2.5.*
 

@@ -8,7 +8,6 @@
 >                          fromDerivedForm,
 >                          parseAnyShape,
 >                          topSortShapes,
->                          upgradeToPolyForm,
 >                          module ChartModel.Polynome,
 >                          module ChartModel.SpecialPoint
 >                          ) where
@@ -105,18 +104,4 @@ depend only on the following shapes.
 >                   (shape, name shape, exprDependencies expr)
 >       cyclic (AcyclicSCC _) = False
 >       cyclic (CyclicSCC _) = True
-
-When we are given the full list of shapes, we can promote the derived
-shape (given as expression) to conform to a Polynomial type class.
-
-> upgradeToPolyForm :: XRange -> YRange -> [Shape] -> [Shape]
-> upgradeToPolyForm xrange yrange shapes =
->   reverse $ map snd $ foldr (\s acc ->
->       case shape s of
->           PolyForm p -> ((name s, p), s) : acc
->           DerivedForm expr ->
->               let polyExpr = PolyWrap (polyFromExpression
->                                        (map fst acc) xrange yrange expr) in
->               ((name s, polyExpr), s { shape = PolyForm polyExpr }) : acc
->       ) [] (topSortShapes shapes)
 

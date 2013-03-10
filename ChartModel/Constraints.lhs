@@ -165,7 +165,7 @@ awaits the global list of coefficients [...,e,d,c,b,a]
 >       initial_cs = coefficients p xrange yrange
 >       -- Cut out our 2 or 3 coefficients out of the long list of coeffs
 >       (start, span) = spanOf (name s)
->       select = take start . drop span
+>       select = reverse . take span . drop start . reverse
 >       cfs = polyCostFunction (cx, cy) initial_cs
 >                                       (map sp_xy $ shape_intersections s)
 >   in map (\(name, f) -> (name, f $ select gcs)) cfs
@@ -180,7 +180,7 @@ awaits the global list of coefficients [...,e,d,c,b,a]
 The shapesCost takes all shapes and creates a multi-coefficient function
 which represent the optimization cost function jointly for all shapes.
 
-> combinedShapesCost :: XRange -> YRange -> [Shape] -> (Int, [Double] -> [(String, Double)])
+> combinedShapesCost :: XRange -> YRange -> [Shape] -> (Int, [(Shape, (Int, Int))], [Double] -> [(String, Double)], [Double] -> String -> Double -> Double)
 > combinedShapesCost xrange yrange shapes =
 >   let (len, positions) = coefficientPositions shapes
 >       name2shape_and_span n = fromJust $ find ((n ==) . name . fst) positions
@@ -189,14 +189,14 @@ which represent the optimization cost function jointly for all shapes.
 >           let (s', span) = name2shape_and_span n
 >               cs = select span gcs
 >           in evalShape (name2eval gcs) cs s'
+>       name2scost n = snd . fromJust . flip lookup n
 >       shape2cost gcs (s, (start, slots)) acc =
 >           let
->               name2scost  :: String -> [(String, Double)]
->               name2scost n = fromJust $ lookup n acc
 >               costArg = SCA xrange yrange name2span (name2eval gcs)
 >           in (name s, shapeCost costArg s gcs) : acc
->       gcs2cost gcs = concatMap snd $ foldr (shape2cost gcs) [] positions
->   in (len, gcs2cost)
->   where select (start, span) = take start . drop span
+>       costfs gcs = foldr (shape2cost gcs) [] positions
+>       gcs2cost gcs = concatMap snd (costfs gcs)
+>   in (len, positions, gcs2cost, name2eval)
+>   where select (start, span) = reverse . take span . drop start . reverse
 
 
