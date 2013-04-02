@@ -14,6 +14,7 @@ Modules for debugging and testMinimize. Not strictly needed here.
 > import Debug.Trace
 > import Numeric.GSL.Minimization
 > import Data.Packed.Matrix
+> import Numeric.Container hiding (find)
 > import Graphics.Plot
 
 A coefficient cost function for minimizing individual coefficients.
@@ -23,21 +24,22 @@ The function is not binary: to be admissible to the optimizer we ought
 to be able to compute its derivative.
 
 > coeffConstraint CoeffAny            k = 0
-> coeffConstraint (CoeffExact a)      k = (10 * (a-k))**10
-> coeffConstraint cf@(CoeffRange lin (l, r)) k
+> coeffConstraint (CoeffExact a)      k = (10 * (1 + abs (a-k))) ** 2
+> coeffConstraint cf@(normalizeCoefficient -> CoeffRange lin (l, r)) k
 >   | signum l * signum r < 0 = error (show cf ++ ": same sign expected")
->   | l > r = coeffConstraint (CoeffRange lin (r, l)) k
 >   | signum l < 0 = coeffConstraint (CoeffRange lin (-l, -r)) (-k)
->   | signum k < 0 = coeffConstraint (CoeffRange lin (r - k, r - k)) 0
 >   | lin == Linear =
 >       let avg = average (l, r)
->       in case ((k - avg) / avg) ** 10 of
->           c | c < 0.5 -> sigmcost c
->             | otherwise -> c
+>           delta = (r - l) / 2
+>       in case (abs (k - avg)) / delta of
+>           c | c < 1 -> c ** 2
+>             | otherwise -> c ** 10
 >   | lin == NonLinear =
 >       let lavg = log_average (l, r)
->       in case exp (log k - lavg) - 1 of
->           c -> sigmcost c
+>       in case abs (k - lavg) of
+>           c | k < l -> (10 + abs (k - l)) ** 10
+>           c | k > r -> (10 + abs (k - r)) ** 10
+>           c -> (1 + exp c) ** 2
 
 Given a polynome of degree D and a list of coordinate pairs which lie
 on that polynome, we produce a cost function for minimizing the coefficients.
@@ -54,25 +56,43 @@ and the initial values or ranges for the coefficients.
 >       -- Compute the cost of intersection with coords
 >       cost2 cs = sum (map (intersection_constraint cs) coords)
 >       -- ax+b=y, cs=[b,a], x and y are known. Minimize (y-(ax+b))^n.
->       intersection_constraint cs (x, y) = (y - evalPoly (poly LE cs) x) ** 2
+>       intersection_constraint cs (x, y) = (10 + abs (y - evalPoly (poly LE cs) x)) ** 10 
 >       -- If no other constraints are in place, the graphs are centered.
->       cost3 cs = (sigmcost (center_y - evalPoly (poly LE cs) center_x)) / 1E20
->   in [("change coeffs", cost1), ("intersection", cost2), ("centering", cost3)]
+>       cost3 cs =
+>           let y = evalPoly (poly LE cs) center_x in
+>           (abs (y - center_y))
+>       -- (deriv^k) makes sure we center near the [parabola] extremum
+>       cost4 cs = if length cs /= 3 then 0 else
+>           let (_, deriv) = evalPolyDeriv (poly LE cs) center_x in
+>           (1 + abs deriv) ** 2
+>   in [("change coeffs", cost1), ("intersection", cost2),
+>       ("centering", cost3), ("extremum", cost4)]
 
 > exprCostFunction :: (Double, Double) -> (String -> Double -> Double) -> Expression -> [(Double, Double)] -> [(String, Double)]
 > exprCostFunction (center_x, center_y) name2f expr coords =
 >   let
 >       -- Compute the cost of intersection with coords
 >       cost2 = sum $ map intersection_constraint coords
->       intersection_constraint (x, y) = (y - evalExpr name2f expr x) ** 2
+>       intersection_constraint (x, y) = (10 + abs (y - evalExpr name2f expr x)) ** 10
 >       -- If no other constraints are in place, the graphs are centered.
->       cost3 = (sigmcost (center_y - evalExpr name2f expr center_x)) / 1E20
+>       cost3 =
+>           let y = evalExpr name2f expr center_x in
+>           (abs (y - center_y))
 >   in [("intersection expr", cost2), ("centering expr", cost3)]
 
 > -- http://en.wikipedia.org/wiki/Sigmoid_function
 > -- sigm is a function which looks like right side
 > -- of sigmoid replicated to the left and with sigmcost 0 = 0.
 > sigmcost x = (1 / (1 + exp (- abs x)) - 0.5)
+
+> plotPCF cfs =
+>   let pcf = polyCostFunction (50, 50) cfs []
+>       f1 = fromJust $ lookup "change coeffs" pcf
+>       f3 = fromJust $ lookup "centering" pcf
+>   in mesh $ build (100, 100) (\i j ->
+>       let a = i - 50
+>           b = 0 -- (j - 50) / 10
+>       in f1 [a, b] + f3 [a, b])
 
 Usage:
 
@@ -83,7 +103,7 @@ ghci> testMinimize (10, 10) [CoeffAny, CoeffRange (-1,-2)] [] [20,20] [1,1]
 > testMinimize center coeffs coords box init_coeffs =
 >   let cost_functions = polyCostFunction center coeffs coords 
 >       cost_f cs = sum $ map (flip snd cs) cost_functions
->       (min, p) = minimize NMSimplex2 1E-5 100
+>       (min, p) = minimize NMSimplex2 1E-10 1000
 >                       box cost_f init_coeffs
 >   in
 >   do
@@ -157,6 +177,8 @@ And the function itself. Note that its return value differs from
 polyCostFunction's return value in that the returns a function
 that accepts the list of specific coefficients, whereas shapeCost
 awaits the global list of coefficients [...,e,d,c,b,a]
+
+*Main> shapeCost (SCA (0,100) (0, 100) (const (0, 2)) undefined) (Shape "L" (PolyForm $ PolyWrap $ InformalLine ChartModel.Line.Positive) []) [1,0]
 
 > shapeCost :: ShapeCostArg -> Shape -> [Double] -> [(String, Double)]
 > shapeCost (SCA xrange yrange spanOf resolve) s@(shape -> PolyForm p) gcs =

@@ -10,8 +10,11 @@ when we need to compute a "middle of the range". See a description for
 the log_average function for details, below.
 
 > data Variability = Linear | NonLinear deriving (Eq, Show, Data, Typeable)
-> data Coefficient a = CoeffExact a | CoeffRange Variability (a, a) | CoeffAny
->                      deriving (Eq, Show, Data, Typeable)
+> data Coefficient a =
+>         CoeffExact a
+>       | CoeffRange Variability (a, a)
+>       | CoeffAny
+>       deriving (Eq, Show, Data, Typeable)
 
 Normalization is making sure range has left and right values in increasing order.
 
@@ -56,7 +59,9 @@ Select only the intersections within a certain box
 > capbox (xl, xr) (yl, yr)
 >   | xl > xr   = capbox (xr, xl) (yl, yr)
 >   | yl > yr   = capbox (xl, xr) (yr, yl)
->   | otherwise = filter (\(x, y) -> x >= xl && x <= xr && y >= yl && y <= yr)
+>   | otherwise = dropWhile outOfRange . reverse . dropWhile outOfRange . reverse
+>  where
+>   outOfRange (x, y) = x < xl || x > xr || y < yl || y > yr
 
 
 Shorten the text representation of a floating point number. This may lose

@@ -24,7 +24,7 @@ of a polynomial.
 >   coefficients p xrange yrange = [
 >       CoeffAny,
 >       CoeffRange Linear (-1 * par_sign p * fst xrange, -1 * par_sign p * snd xrange),
->       CoeffRange NonLinear (0.001 * par_sign p, 1 * par_sign p)
+>       CoeffRange NonLinear (0.05 * par_sign p, 5 * par_sign p)
 >    ]
 >       where
 >           par_sign (Parabola Inverted)  = -1.0
@@ -34,6 +34,7 @@ of a polynomial.
 
 > guess_coeff (Parabola Inverted) xrange yrange 0 CoeffAny = 0
 > guess_coeff (Parabola Proper) xrange (ybtm, ytop) 0 CoeffAny = ytop
+> guess_coeff p xrange yrange _ CoeffAny = 1
 > guess_coeff p xrange yrange _ (CoeffRange Linear range) = average range
 > guess_coeff p xrange yrange _ (CoeffRange NonLinear range) = log_average range
 > guess_coeff p xrange yrange _ (CoeffExact c) = c

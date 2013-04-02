@@ -10,6 +10,7 @@ Explain the chart in plain english for the blind people.
 > import ChartModel.Parabola
 
 > explain :: XRange -> YRange -> [(String, [Double])] -> String
+> explain xrange yrange reified_shapes = ""
 > explain xrange yrange reified_shapes = intercalate " " $ concat [
 >     [case (length lines, length parabolas) of
 >       (0, 0) -> "The graph is empty."

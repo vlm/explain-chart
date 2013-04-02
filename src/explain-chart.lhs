@@ -157,6 +157,20 @@ text comes at the very end of the output.
 >       renderableToPDFFile (toRenderable layout) 500 500 (show file)
 >       putStrLn ("Image saved as " ++ show file)
 
+A helper that displays all of the given functions within the specified range.
+
+Usage:
+ghci> display_f 0 100 [id]
+
+> display_f :: Double -> Double -> [Double -> Double] -> IO ()
+> display_f start stop fs =
+>   let plot =
+>        plot_lines_values ^= [map (ap (,) f) [start,(start + 0.001 * (stop-start))..stop] | f <- fs]
+>        $ defaultPlotLines
+>       layout =
+>        layout1_plots ^= [Left (toPlot plot)] $ defaultLayout1
+>   in renderableToPDFFile (toRenderable layout) 500 500 "debug.pdf"
+
 Concretize vague shape coefficients by globally optimizing for intersections,
 shape center, and other constraints.
 
@@ -164,23 +178,30 @@ shape center, and other constraints.
 >   let (numcs, shapes_and_positions, costFunction, name2eval) =
 >           combinedShapesCost xrange yrange all_shapes
 >       cost_f = sum . map snd . costFunction
->       polyForms = map (fromPolyForm . shape) $ filter (isPolyForm . shape) all_shapes
+>       polyForms = map fromPolyForm $ filter isPolyForm $ map (shape . fst) shapes_and_positions
 >       coeff_constraints = concatMap (\p -> coefficients p xrange yrange) polyForms
 >       coeff_init_guess = concatMap (\p -> coeff_initial_guess p xrange yrange) polyForms
 >       sbox = concatMap (\p -> search_box p xrange yrange) polyForms
 >       !(final_coeffs, p) =
->           minimize NMSimplex2 1E-5 1000 sbox cost_f coeff_init_guess
->   in Debug.Trace.trace ("Positions: " ++ (show $ coefficientPositions all_shapes)) $ map (\(s, span) ->
+>           minimize NMSimplex2 1E-10 10000 sbox cost_f coeff_init_guess
+>   in
+>    Debug.Trace.trace ("Constraints: " ++ (show $ coeff_constraints))
+>    $ Debug.Trace.trace ("Guesses: " ++ (show $ coeff_init_guess))
+>    $ Debug.Trace.trace ("Minimize coeffs: " ++ (show $ sbox))
+>    $ Debug.Trace.trace ("Positions: " ++ (show $ coefficientPositions all_shapes)) $ concatMap (\(s, span) ->
 >       let n = name s
 >           cs = select span final_coeffs
->           !_ = shape_costf xrange yrange s
+>           !oldcs = shape_costf xrange yrange s
 >       in shout Short ("NEW " ++ n ++ ":" ++ show span)
 >          $ shout Short ("  N Intersections " ++ show (shape_intersections s))
 >          $ shout Short ("  N Minimize search box: " ++ show (select span sbox))
 >          $ shout Short ("  N Constraint coeffs: " ++ show (select span coeff_constraints))
 >          $ shout Short ("  N Guess coefficients " ++ show (select span coeff_init_guess))
->          $ shout Short ("  N Final coefficients " ++ show cs)
->          ((n, cs), name2eval final_coeffs n)
+>          $ shout Short ("  N Final coefficients " ++ showPolynome cs)
+>          $ shout Short ("  N cost: " ++ show (sum (map (($ select span final_coeffs) . snd) $ polyCostFunction (50, 50) (coefficients (fromPolyForm $ shape s) xrange yrange) (map sp_xy $ shape_intersections s))))
+>          $ shout Short ("  N cost: " ++ show (map (fmap ($ select span final_coeffs)) $ polyCostFunction (50, 50) (coefficients (fromPolyForm $ shape s) xrange yrange) (map sp_xy $ shape_intersections s)))
+>          [((n, cs), name2eval final_coeffs n)
+>          ] --,((n++"/o", oldcs), evalPoly (poly LE oldcs))]
 >   ) shapes_and_positions
 >   where select (start, span) = reverse . take span . drop start . reverse
 
@@ -196,13 +217,15 @@ shape center, and other constraints.
 >       cost_f cs = sum $ map (flip snd cs) cost_functions
 >       sbox = (search_box . fromPolyForm) shape xrange yrange
 >       !(final_coeffs, p) =
->           minimize NMSimplex2 1E-5 100 sbox cost_f coeff_init_guess
->   in Debug.Trace.trace ("OLD " ++ name ++ ":")
+>           minimize NMSimplex2 1E-10 10000 sbox cost_f coeff_init_guess
+>   in Debug.Trace.trace ("OLD " ++ name ++ ":" ++ show (cx, cy))
 >      $ Debug.Trace.trace ("  O Intersections " ++ show intersections)
 >      $ Debug.Trace.trace ("  O Minimize search box: " ++ show sbox)
 >      $ Debug.Trace.trace ("  O Constraint coeffs: " ++ show coeff_constraints)
 >      $ Debug.Trace.trace ("  O Guess coefficients " ++ show coeff_init_guess)
->      $ Debug.Trace.trace ("  O Final coefficients " ++ show final_coeffs)
+>      $ Debug.Trace.trace ("  O Final coefficients " ++ showPolynome final_coeffs)
+>      $ Debug.Trace.trace ("  O cost: " ++ show (sum (map (\(a,f) -> f final_coeffs) $ polyCostFunction (cx, cy) coeff_constraints (map sp_xy intersections))))
+>      $ Debug.Trace.trace ("  O cost: " ++ show (map (fmap ($ final_coeffs)) $ polyCostFunction (cx, cy) coeff_constraints (map sp_xy intersections)))
 >      final_coeffs
 
 
