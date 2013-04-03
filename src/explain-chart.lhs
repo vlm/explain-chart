@@ -177,57 +177,53 @@ shape center, and other constraints.
 > reify_shapes shout xrange yrange all_shapes =
 >   let (numcs, shapes_and_positions, costFunction, name2eval) =
 >           combinedShapesCost xrange yrange all_shapes
->       cost_f = sum . map snd . costFunction
+>       cost_f acs = sum $ concatMap cost_parts $ costFunction (AP acs)
 >       polyForms = map fromPolyForm $ filter isPolyForm $ map (shape . fst) shapes_and_positions
 >       coeff_constraints = concatMap (\p -> coefficients p xrange yrange) polyForms
 >       coeff_init_guess = concatMap (\p -> coeff_initial_guess p xrange yrange) polyForms
 >       sbox = concatMap (\p -> search_box p xrange yrange) polyForms
->       !(final_coeffs, p) =
->           minimize NMSimplex2 1E-10 10000 sbox cost_f coeff_init_guess
+>       !(final_all_coeffs, p) =
+>           --minimize NMSimplex2 1E-10 10000 sbox cost_f coeff_init_guess
+>           --minimizeD VectorBFGS2 1E-10 10000 1.0 0.01 cost_f (grad cost_f) (map (+0) coeff_init_guess)
+>           minimizeD ConjugateFR 1E-1 10000 1.0 0.01 cost_f (grad cost_f) (map (+0) coeff_init_guess)
 >   in
->    Debug.Trace.trace ("Constraints: " ++ (show $ coeff_constraints))
->    $ Debug.Trace.trace ("Guesses: " ++ (show $ coeff_init_guess))
+>    Debug.Trace.trace ("p : " ++ (show $ p))
+>    $ Debug.Trace.trace ("Constraints: " ++ (show $ coeff_constraints))
 >    $ Debug.Trace.trace ("Minimize coeffs: " ++ (show $ sbox))
->    $ Debug.Trace.trace ("Positions: " ++ (show $ coefficientPositions all_shapes)) $ concatMap (\(s, span) ->
+>    $ Debug.Trace.trace ("Guesses: " ++ (show $ coeff_init_guess))
+>    $ Debug.Trace.trace ("Final coeffs: " ++ (show $ final_all_coeffs))
+>    $ Debug.Trace.trace ("Forms: " ++ (show $ map (\(s, span) -> (name s, span)) shapes_and_positions))
+>    $ concatMap (\(s, span) ->
 >       let n = name s
->           cs = select span final_coeffs
->           !oldcs = shape_costf xrange yrange s
+>           cs = select span final_all_coeffs
 >       in shout Short ("NEW " ++ n ++ ":" ++ show span)
 >          $ shout Short ("  N Intersections " ++ show (shape_intersections s))
 >          $ shout Short ("  N Minimize search box: " ++ show (select span sbox))
 >          $ shout Short ("  N Constraint coeffs: " ++ show (select span coeff_constraints))
 >          $ shout Short ("  N Guess coefficients " ++ show (select span coeff_init_guess))
 >          $ shout Short ("  N Final coefficients " ++ showPolynome cs)
->          $ shout Short ("  N cost: " ++ show (sum (map (($ select span final_coeffs) . snd) $ polyCostFunction (50, 50) (coefficients (fromPolyForm $ shape s) xrange yrange) (map sp_xy $ shape_intersections s))))
->          $ shout Short ("  N cost: " ++ show (map (fmap ($ select span final_coeffs)) $ polyCostFunction (50, 50) (coefficients (fromPolyForm $ shape s) xrange yrange) (map sp_xy $ shape_intersections s)))
->          [((n, cs), name2eval final_coeffs n)
->          ] --,((n++"/o", oldcs), evalPoly (poly LE oldcs))]
+>          $ shout Short ("  N Gradient " ++ show (select span (grad cost_f final_all_coeffs)))
+>          $ shout Short ("  N " ++ show (fmap ($ select span final_all_coeffs) $ polyCostFunction (50, 50) (coefficients (fromPolyForm $ shape s) xrange yrange) (map sp_xy $ shape_intersections s)))
+>          $ shout Short ("  N cost: " ++ show (sumCost ($ select span final_all_coeffs) $ polyCostFunction (50, 50) (coefficients (fromPolyForm $ shape s) xrange yrange) (map sp_xy $ shape_intersections s)))
+>          [((n, cs), name2eval (AP final_all_coeffs) n)]
 >   ) shapes_and_positions
 >   where select (start, span) = reverse . take span . drop start . reverse
 
++>          $ shout Short ("  N Gradient " ++ show (grad (\cs -> sum (map (($ cs
 
-> shape_costf xrange yrange (Shape name shape@(DerivedForm _) intersections) = []
-> shape_costf xrange yrange (Shape name shape@(PolyForm _) intersections) =
->   let
->       coeff_constraints = (coefficients . fromPolyForm) shape xrange yrange
->       coeff_init_guess = (coeff_initial_guess . fromPolyForm) shape xrange yrange
->       cx = center_x shape xrange
->       cy = center_y shape yrange
->       cost_functions = polyCostFunction (cx, cy) coeff_constraints (map sp_xy intersections)
->       cost_f cs = sum $ map (flip snd cs) cost_functions
->       sbox = (search_box . fromPolyForm) shape xrange yrange
->       !(final_coeffs, p) =
->           minimize NMSimplex2 1E-10 10000 sbox cost_f coeff_init_guess
->   in Debug.Trace.trace ("OLD " ++ name ++ ":" ++ show (cx, cy))
->      $ Debug.Trace.trace ("  O Intersections " ++ show intersections)
->      $ Debug.Trace.trace ("  O Minimize search box: " ++ show sbox)
->      $ Debug.Trace.trace ("  O Constraint coeffs: " ++ show coeff_constraints)
->      $ Debug.Trace.trace ("  O Guess coefficients " ++ show coeff_init_guess)
->      $ Debug.Trace.trace ("  O Final coefficients " ++ showPolynome final_coeffs)
->      $ Debug.Trace.trace ("  O cost: " ++ show (sum (map (\(a,f) -> f final_coeffs) $ polyCostFunction (cx, cy) coeff_constraints (map sp_xy intersections))))
->      $ Debug.Trace.trace ("  O cost: " ++ show (map (fmap ($ final_coeffs)) $ polyCostFunction (cx, cy) coeff_constraints (map sp_xy intersections)))
->      final_coeffs
+Numerically compute a gradient for a given polynome.
 
+> grad :: ([Double] -> Double) -> [Double] -> [Double]
+> grad cost_f cs =
+>   case [ new_cs
+>       | epsilon <- [ 10 ** e | e <- [-10 .. -5] ],
+>         new_cs <- [[ (cost_f (fmapN n (+epsilon) cs) - cost_f cs) / epsilon
+>                      | n <- [0 .. (length cs) - 1] ]],
+>         sum new_cs /= 0] of
+>       [] -> replicate (length cs) 0
+>       (xs:_) -> xs
+>   where fmapN n f list =
+>           zipWith (\i e -> if i == n then f e else e) [0..] list
 
 > plot_cost_functions name ((xl, xr), (yl, yr)) cfs =
 >   let

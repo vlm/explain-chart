@@ -3,6 +3,7 @@
 > module ChartModel.Shape (Shape(..),
 >                          ShapeForm(..),
 >                          Shapeoid(..),
+>                          mockPolyShape,
 >                          isPolyForm,
 >                          fromPolyForm,
 >                          fromDerivedForm,
@@ -47,6 +48,25 @@ as well as somewhat more complex expression combining the primitives.
 > fromPolyForm (DerivedForm _) = error "Unexpected derived form, giving up"
 > fromDerivedForm (PolyForm _) = error "Unexpected polynomial form, giving up"
 > fromDerivedForm (DerivedForm sf) = sf
+
+Mock a non-specific polynomial shape by giving it precise coefficient ranges
+and guess coefficient values.
+
+> mockPolyShape :: String -> [Coefficient Double] -> [Double] -> Shape
+> mockPolyShape name cs guess =
+>   Shape name (PolyForm $ PolyWrap (MP cs guess)) []
+
+But what is this MP above? This is our private MockPolynome structure
+that can pretend to be a Polynomial class by just returning the values it
+has been initialized with during construction.
+
+> data MockPolynome = MP {
+>       mp_coeffs :: [Coefficient Double],
+>       mp_guess :: [Double]
+>   } deriving (Data, Typeable, Show)
+> instance Polynomial MockPolynome where
+>   coefficients        a _ _ = mp_coeffs a
+>   coeff_initial_guess a _ _ = mp_guess a
 
 > class Shapeoid a where
 >    center_x :: a -> (Double, Double) -> Double
