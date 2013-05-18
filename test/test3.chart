@@ -1,0 +1,9 @@
+
+save "test3.pdf"
+
+x-axis range 0..100 labeled
+y-axis range 0..100 labeled
+
+NegCentered = line with steeply negative slope
+
+check NegCentered coefficients [230 ± 20, -3.6 ± 0.2]

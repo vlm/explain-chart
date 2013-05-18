@@ -1,0 +1,17 @@
+
+save "fig1.pdf"
+
+x-axis range 0..100 unlabeled "Quantity"
+y-axis range 0..100 unlabeled "Price"
+
+D = line with negative slope
+MC = line with steep positive slope
+MR = line with steep negative slope
+ATC = parabola
+
+MC and MR intersect at (30, 40)
+MC and D intersect at (50, 60)
+ATC and D intersect at (30, 80)
+ATC and MC intersect at (60, 70)
+ATC goes through (85, 90)
+MR goes through (0, 110)

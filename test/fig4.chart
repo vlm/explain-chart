@@ -1,0 +1,10 @@
+
+save "fig4.pdf"
+
+x-axis range 0..800 labeled "price"
+y-axis range 0..45 labeled "quantity"
+
+S = line with positive slope
+D = line with negative slope
+
+S and D intersect at (400, 25)
